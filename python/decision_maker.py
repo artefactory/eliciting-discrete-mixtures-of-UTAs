@@ -68,3 +68,12 @@ class DecisionMaker:
                         dv = -du + u_j - self.break_point_y[criterion_j][i]
                         return i + dv / self.slopes[criterion_j][i]
         
+
+class HiddenDecisionMakers:
+
+    def __init__(self, n_dms, n_criteria, n_pieces):
+        self.dms = [DecisionMaker(n_criteria, n_pieces) for i in range(n_dms)]
+
+    def answer(self, criterion_i, criterion_j, q_i, p_i, q_j):
+        answers = [dm.answer(criterion_i, criterion_j, q_i, p_i, q_j) for dm in self.dms]
+        return np.random.permutation(answers)
