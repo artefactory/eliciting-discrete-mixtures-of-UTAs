@@ -139,8 +139,8 @@ class UTAsIdentification:
             self.slopes["alpha"][criterion].append(possible_slopes[0])
             self.slopes["beta"][criterion].append(possible_slopes[1])
         else:
-            self.slopes["alpha"][criterion].append(other_possible_slopes[0])
-            self.slopes["beta"][criterion].append(other_possible_slopes[1])
+            self.slopes["alpha"][criterion].append(other_possible_slopes[1])
+            self.slopes["beta"][criterion].append(other_possible_slopes[0])
 
 
     def identify_hdms(self, hdms):
