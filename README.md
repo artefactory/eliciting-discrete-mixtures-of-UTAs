@@ -1,1 +1,1 @@
-# eliciting-discrete-mixtures-of-UTAs
+# Eliciting Discrete Mixtures of UTA models
