@@ -13,6 +13,7 @@ class DecisionMaker:
         self.slopes = self.build_random_decision_function()
         self.breakpoints_x = np.linspace(0, self.n_pieces, self.n_pieces+1)
         self.break_point_y = np.stack([[0] + [np.sum(self.slopes[i][:j+1]) for j in range(self.n_pieces)] for i in range(self.n_criteria)])
+        self.total_n_answers = 0
 
     def build_random_decision_function(self):
         slopes = []
@@ -49,6 +50,8 @@ class DecisionMaker:
         du = self.get_ui(criterion_i, p_i) - self.get_ui(criterion_i, q_i)
         u_j = self.get_ui(criterion_j, q_j)
 
+        self.total_n_answers += 1
+
         if du > 0:
             if du > u_j:
                 return None
@@ -68,6 +71,8 @@ class DecisionMaker:
                         dv = -du + u_j - self.break_point_y[criterion_j][i]
                         return i + dv / self.slopes[criterion_j][i]
         
+    def get_total_n_answers(self):
+        return self.total_n_answers
 
 class HiddenDecisionMakers:
 
@@ -77,3 +82,6 @@ class HiddenDecisionMakers:
     def answer(self, criterion_i, criterion_j, q_i, p_i, q_j):
         answers = [dm.answer(criterion_i, criterion_j, q_i, p_i, q_j) for dm in self.dms]
         return np.random.permutation(answers)
+
+    def get_total_n_answers(self):
+        return [dm.get_total_n_answers() for dm in self.dms]
