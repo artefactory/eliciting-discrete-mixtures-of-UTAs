@@ -94,7 +94,7 @@ class UTAsIdentification:
         crits, I1, I2 = query.query_hidden_dms(hdms)
 
         if opposite_criterion == 0:
-            slopes_values = [(I1[0][0] - I1[1][0]) / (I1[1][1] - I1[0][1]), ((I2[0][0] - I2[1][0]) / (I2[1][1] - I2[0][1]))]
+            slopes_values = [(I1[1][1] - I1[0][1]) / (I1[0][0] - I1[1][0]), ((I2[1][1] - I2[0][1]) / (I2[0][0] - I2[1][0]))]
         else:
             slopes_values = [[((I1[1][1] - I1[0][1]) / (I1[0][0] - I1[1][0])) * self.slopes["alpha"][opposite_criterion][0], 
             ((I2[1][1] - I2[0][1]) / (I2[0][0] - I2[1][0])) * self.slopes["beta"][opposite_criterion][0]],
@@ -121,20 +121,20 @@ class UTAsIdentification:
             ])
 
             case_2 = np.min([
-                np.abs(other_possible_slopes[0] - slopes_values[0]) + np.abs(other_possible_slopes[1] - slopes_values[1]),
-                np.abs(other_possible_slopes[1] - slopes_values[0]) + np.abs(other_possible_slopes[0] - slopes_values[1])
+                np.abs(other_possible_slopes[1] - slopes_values[0]) + np.abs(other_possible_slopes[0] - slopes_values[1]),
+                np.abs(other_possible_slopes[0] - slopes_values[0]) + np.abs(other_possible_slopes[1] - slopes_values[1])
             ])
         else:
             case_1 = np.min([
                 np.abs(possible_slopes[0] - slopes_values[0][0]) + np.abs(possible_slopes[1] - slopes_values[0][1]),
-                np.abs(possible_slopes[0] - slopes_values[1][0]) + np.abs(possible_slopes[0] - slopes_values[1][1])
+                np.abs(possible_slopes[0] - slopes_values[1][0]) + np.abs(possible_slopes[1] - slopes_values[1][1])
             ])
 
             case_2 = np.min([
-                np.abs(other_possible_slopes[0] - slopes_values[0][0]) + np.abs(other_possible_slopes[1] - slopes_values[0][1]),
-                np.abs(other_possible_slopes[1] - slopes_values[0][1]) + np.abs(other_possible_slopes[0] - slopes_values[1][1])
+                np.abs(other_possible_slopes[1] - slopes_values[0][0]) + np.abs(other_possible_slopes[0] - slopes_values[0][1]),
+                np.abs(other_possible_slopes[1] - slopes_values[1][0]) + np.abs(other_possible_slopes[0] - slopes_values[1][1])
             ])
-            
+        
         if case_1 < case_2:
             self.slopes["alpha"][criterion].append(possible_slopes[0])
             self.slopes["beta"][criterion].append(possible_slopes[1])
