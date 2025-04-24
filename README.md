@@ -1,3 +1,3 @@
 # Eliciting Discrete Mixtures of UTA models
 
-![image](./resources/illustration.png)
+<img style="float: right;" src="./resources/illustration.png">
