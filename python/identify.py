@@ -92,7 +92,7 @@ class UTAsIdentification:
         min_j=0,
         max_j=1)
         crits, I1, I2 = query.query_hidden_dms(hdms)
-
+        
         if opposite_criterion == 0:
             slopes_values = [(I1[1][1] - I1[0][1]) / (I1[0][0] - I1[1][0]), ((I2[1][1] - I2[0][1]) / (I2[0][0] - I2[1][0]))]
         else:
@@ -134,7 +134,6 @@ class UTAsIdentification:
                 np.abs(other_possible_slopes[1] - slopes_values[0][0]) + np.abs(other_possible_slopes[0] - slopes_values[0][1]),
                 np.abs(other_possible_slopes[1] - slopes_values[1][0]) + np.abs(other_possible_slopes[0] - slopes_values[1][1])
             ])
-        
         if case_1 < case_2:
             self.slopes["alpha"][criterion].append(possible_slopes[0])
             self.slopes["beta"][criterion].append(possible_slopes[1])
