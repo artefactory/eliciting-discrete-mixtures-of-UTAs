@@ -92,7 +92,7 @@ class UTAsIdentification:
         min_j=0,
         max_j=1)
         crits, I1, I2 = query.query_hidden_dms(hdms)
-        
+
         if opposite_criterion == 0:
             slopes_values = [(I1[1][1] - I1[0][1]) / (I1[0][0] - I1[1][0]), ((I2[1][1] - I2[0][1]) / (I2[0][0] - I2[1][0]))]
         else:

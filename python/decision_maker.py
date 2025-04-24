@@ -13,7 +13,6 @@ class DecisionMaker:
         self.slopes = self.build_random_decision_function()
         self.breakpoints_x = np.linspace(0, self.n_pieces, self.n_pieces+1)
         self.break_point_y = np.stack([[0] + [np.sum(self.slopes[i][:j+1]) for j in range(self.n_pieces)] for i in range(self.n_criteria)])
-
         self.total_n_answers = 0
 
     def build_random_decision_function(self):
