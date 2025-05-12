@@ -9,4 +9,4 @@ Vincent Auriau<sup>1, 2</sup>, Khaled Belahcène<sup>1</sup>, Emmanuel Malherbe<
 </div>
 
 
-<img style="float: right;" src="./resources/illustration.png">
+<img align="right" src="./resources/illustration.png">
