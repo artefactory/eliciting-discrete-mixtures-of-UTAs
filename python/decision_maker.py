@@ -27,7 +27,7 @@ class DecisionMaker:
             slopes.append(crit_slopes)
         return np.stack(slopes)
 
-    def plot_decision_function(self):
+    def plot_decision_function(self, show=True):
         x = np.linspace(0, self.n_pieces, self.n_pieces+1)
         for i in range(self.n_criteria):
             y = [0]
@@ -37,7 +37,8 @@ class DecisionMaker:
         plt.legend()
         plt.xlabel("x")
         plt.ylabel("Utility")
-        plt.show()
+        if show:
+            plt.show()
 
     def get_ui(self, criterion, value):
         marginal_utility = 0
