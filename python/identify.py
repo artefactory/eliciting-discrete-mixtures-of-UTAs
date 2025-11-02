@@ -154,3 +154,7 @@ class UTAsIdentification:
         for i in range(2, self.n_criteria):
             for j in range(self.n_pieces):
                 self.generic_identification(hdms=hdms, criterion=i, square=j)
+        
+        ###                      ###
+        # Add Renormalization here #
+        ###                      ###
