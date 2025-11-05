@@ -1,5 +1,7 @@
 import numpy as np
 
+from .decision_maker import DecisionMaker
+
 class SyntheticDataGenerator:
     def __init__(
         self,
@@ -43,7 +45,7 @@ class SyntheticDataGenerator:
         else:
             raise ValueError("Unsupported shape of X", X.shape)
 
-    def generate_preference_data(
+    def generate_preferences(
         self, num_pairs, return_utilities=False, return_clusters=False, verbose=0
     ):
         X, Y = [], []
@@ -116,7 +118,7 @@ class SyntheticDataGenerator:
         return np.stack(X), np.stack(Y), additional_info
 
 
-    def generate_indifference_data(
+    def generate_indifferences(
         self, num_pairs, return_utilities=False, return_clusters=False, verbose=0
     ):
         X, Y = [], []

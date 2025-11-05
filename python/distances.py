@@ -1090,7 +1090,7 @@ class TwoUTASpaceDiameter(object):
             monotonicity = {
                 (i): {
                     k: self.solver.addConstr(
-                        self.marginal_coeffs[name, i, k + 1] >= marginal_coeffs[name, i, k],
+                        self.marginal_coeffs[name, i, k + 1] >= self.marginal_coeffs[name, i, k],
                         name="monotonicity",
                     )
                     for k in range(self.n_pieces)
@@ -1132,18 +1132,18 @@ class TwoUTASpaceDiameter(object):
             
         pref_d1 = {
             ("d1", i): self.solver.addConstr(
-                gp.quicksum([estimate_x[("d1", i, j)] for j in range(n_features)])
-                - gp.quicksum([estimate_y[("d1", i, j)] for j in range(n_features)])
-                + self.majoring_value * self.z_d[i]
+                gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                - gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                + majoring_value * self.z_d[i]
                 >= self.epsilon
             )
             for i in range(n_samples)
         }
         pref_d2 = {
             ("d2", i): self.solver.addConstr(
-                gp.quicksum([estimate_x[("d2", i, j)] for j in range(n_features)])
-                - gp.quicksum([estimate_y[("d2", i, j)] for j in range(n_features)])
-                + self.majoring_value * (1 - self.z_d[i])
+                gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                - gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                + majoring_value * (1 - self.z_d[i])
                 >= self.epsilon
             )
             for i in range(n_samples)
@@ -1151,30 +1151,30 @@ class TwoUTASpaceDiameter(object):
 
         pref_s1 = {
             ("s1", i): self.solver.addConstr(
-                gp.quicksum([estimate_x[("s1", i, j)] for j in range(n_features)])
-                - gp.quicksum([estimate_y[("s1", i, j)] for j in range(n_features)])
-                + self.majoring_value * self.z_s[i]
+                gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                - gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                + majoring_value * self.z_s[i]
                 >= self.epsilon
             )
             for i in range(n_samples)
         }
         pref_s2 = {
             ("s2", i): self.solver.addConstr(
-                gp.quicksum([estimate_x[("s2", i, j)] for j in range(n_features)])
-                - gp.quicksum([estimate_y[("s2", i, j)] for j in range(n_features)])
-                + self.majoring_value * (1 - self.z_s[i])
+                gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                - gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                + majoring_value * (1 - self.z_s[i])
                 >= self.epsilon
             )
             for i in range(n_samples)
         }
 
-        for name in [("d1", "s1"), ("d1", "s2"), ("d2", "s1",) ("d2", "s2")]:
+        for name in [("d1", "s1"), ("d1", "s2"), ("d2", "s1"), ("d2", "s2")]:
             for j in range(self.n_pieces + 1):
                 for i in range(n_features):
-                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] >= self.marginal_coefficients[(name[0], i, j)] - self.marginal_coeffs[(name[1], i, j)], name=f"a_{i}_{j}")
-                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] >= - self.marginal_coefficients[(name[0], i, j)] + self.marginal_coeffs[(name[1], i, j)], name=f"b_{i}_{j}")
-                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] <=  self.marginal_coefficients[(name[0], i, j)] - self.marginal_coeffs[(name[1], i, j)] + majoring_value * self.abs_id[(f"{name[0]}_{name[1]}", i, j)], name=f"c_{i}_{j}")
-                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] <=  - self.marginal_coefficients[(name[0], i, j)] + self.marginal_coeffs[(name[1], i, j)] + majoring_value * (1 - self.abs_id[(f"{name[0]}_{name[1]}", i, j)]), name=f"d_{i}_{j}")
+                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] >= self.marginal_coeffs[(name[0], i, j)] - self.marginal_coeffs[(name[1], i, j)], name=f"a_{i}_{j}")
+                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] >= - self.marginal_coeffs[(name[0], i, j)] + self.marginal_coeffs[(name[1], i, j)], name=f"b_{i}_{j}")
+                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] <=  self.marginal_coeffs[(name[0], i, j)] - self.marginal_coeffs[(name[1], i, j)] + majoring_value * self.abs_id[(f"{name[0]}_{name[1]}", i, j)], name=f"c_{i}_{j}")
+                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] <=  - self.marginal_coeffs[(name[0], i, j)] + self.marginal_coeffs[(name[1], i, j)] + majoring_value * (1 - self.abs_id[(f"{name[0]}_{name[1]}", i, j)]), name=f"d_{i}_{j}")
 
         ### Obj
 
@@ -1202,12 +1202,13 @@ class TwoUTASpaceDiameter(object):
                 [self.upper_bound_marginal_coeffs[(i, j)].x for j in range(self.n_pieces + 1)]
                 for i in range(n_features)
             ]
-            """for k, v in estimate_x.items():
+            '''
+            for k, v in estimate_x.items():
                 estimate_x[k] = v.x
             for k, v in estimate_y.items():
                 estimate_y[k] = v.x
 
-            return estimate_x, estimate_y"""
+            return estimate_x, estimate_y'''
             return
         else:
             return "error"
