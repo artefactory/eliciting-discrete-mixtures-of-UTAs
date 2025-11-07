@@ -146,10 +146,71 @@ class SyntheticDataGenerator:
 
                     uyi_0 = np.random.uniform(0, 1)
                     uyi_1 = self.dms[i].get_indifference_on_two_criteria(criterion_i=indexes[0], criterion_j=indexes[1],
-                                                                        query_i=x[indexes[0]], p_i=x[indexes[1]], query_j=uyi_0)
+                                                                        query_i=x[indexes[0]], p_i=uyi_0, query_j=x[indexes[1]])
 
                 y[indexes[0]] = uyi_0
                 y[indexes[1]] = uyi_1
+
+                X.append(x)
+                Y.append(y)
+                utilities[0].append(ux)
+                utilities[1].append(np.around(self.utility(y), decimals=self.decimals)[i])
+                populations[i] += 1
+                clusters.append(i)
+        if verbose > 0:
+            print("Clusters Populations", populations)
+        additional_info = {}
+        for i in range(self.n_dms):
+            additional_info[f"coefficients_{i}"] = self.dms[i].coefficients
+
+        if return_utilities:
+            additional_info["utilities_x"] = np.array(utilities)[0]
+            additional_info["utilities_y"] = np.array(utilities)[1]
+        if return_clusters:
+            additional_info["clusters"] = np.array(clusters)
+        return np.stack(X), np.stack(Y), additional_info
+
+
+    def generate_indifferences_alldms(
+        self, num_pairs, return_utilities=False, return_clusters=False, verbose=0
+    ):
+        X, Y = [], []
+
+        utilities = [[], []]
+        clusters = []
+        # Useless now that we have clusters
+        populations = [0] * self.n_dms
+        if not isinstance(num_pairs, list):
+            num_pairs = np.array([np.ceil(num_pairs / self.n_dms)] * self.n_dms).astype(int)
+
+        for _ in range(num_pairs[0]):
+            print(_)
+            x = np.around(
+                np.random.uniform(0, 1, self.n_criteria), decimals=self.decimals
+            )
+            ux = np.around(self.utility(x), decimals=self.decimals)[0]
+
+            uyj = [None for _ in range(self.n_dms)]
+            indexes = np.random.permutation(np.arange(len(x)))[:2]
+
+            count = 0
+            while None in uyj:
+
+                uyi_0 = np.random.uniform(0, 1)
+                for i in range(self.n_dms):
+
+                    uyj[i] = self.dms[i].get_indifference_on_two_criteria(criterion_i=indexes[0], criterion_j=indexes[1],
+                                                                        query_i=x[indexes[0]], p_i=uyi_0, query_j=x[indexes[1]])
+
+                count += 1
+                if count % 1000 == 0:
+                    print(count, uyi_0, x[indexes[0]], uyi_1,  x[indexes[1]])
+
+            for i in range(self.n_dms):
+
+                y = x.copy()
+                y[indexes[0]] = uyi_0
+                y[indexes[1]] = uyj[i]
 
                 X.append(x)
                 Y.append(y)
