@@ -1,4 +1,5 @@
 import numpy as np
+import tqdm
 
 from .decision_maker import DecisionMaker
 
@@ -137,14 +138,14 @@ class SyntheticDataGenerator:
                 x = np.around(
                     np.random.uniform(0, 1, self.n_criteria), decimals=self.decimals
                 )
-                ux = np.around(self.utility(x), decimals=self.decimals)[0]
+                ux = np.around(self.utility(x), decimals=self.decimals)[i]
                 y = x.copy()
                 
                 uyi_1 = None
                 while uyi_1 is None:
                     indexes = np.random.permutation(np.arange(len(x)))[:2]
 
-                    uyi_0 = np.random.uniform(0, 1)
+                    uyi_0 = np.around(np.random.uniform(0, 1), decimals=self.decimals)
                     uyi_1 = self.dms[i].get_indifference_on_two_criteria(criterion_i=indexes[0], criterion_j=indexes[1],
                                                                         query_i=x[indexes[0]], p_i=uyi_0, query_j=x[indexes[1]])
 
@@ -183,12 +184,10 @@ class SyntheticDataGenerator:
         if not isinstance(num_pairs, list):
             num_pairs = np.array([np.ceil(num_pairs / self.n_dms)] * self.n_dms).astype(int)
 
-        for _ in range(num_pairs[0]):
-            print(_)
+        for _ in tqdm.trange(num_pairs[0]):
             x = np.around(
                 np.random.uniform(0, 1, self.n_criteria), decimals=self.decimals
             )
-            ux = np.around(self.utility(x), decimals=self.decimals)[0]
 
             uyj = [None for _ in range(self.n_dms)]
             indexes = np.random.permutation(np.arange(len(x)))[:2]
@@ -203,8 +202,6 @@ class SyntheticDataGenerator:
                                                                         query_i=x[indexes[0]], p_i=uyi_0, query_j=x[indexes[1]])
 
                 count += 1
-                if count % 1000 == 0:
-                    print(count, uyi_0, x[indexes[0]], uyi_1,  x[indexes[1]])
 
             for i in range(self.n_dms):
 
@@ -214,8 +211,10 @@ class SyntheticDataGenerator:
 
                 X.append(x)
                 Y.append(y)
+                ux = np.around(self.utility(x), decimals=self.decimals)[i]
                 utilities[0].append(ux)
                 utilities[1].append(np.around(self.utility(y), decimals=self.decimals)[i])
+                assert utilities[1][-1] == utilities[0][-1], f"{(np.around(self.utility(y), decimals=self.decimals)[i], )}"
                 populations[i] += 1
                 clusters.append(i)
         if verbose > 0:

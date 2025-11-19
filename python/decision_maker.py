@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def get_random_uniform_normalized_vector(num_values, norm_value=1, decimals=6):
+def get_random_uniform_normalized_vector(num_values, norm_value=1, decimals=3):
     """
     Functions that returns a random and normalized vector W
     W = [wi] such that wi >= 0, sum(wi) = norm_values, i = [1, num_values]
@@ -107,18 +107,19 @@ class DecisionMaker:
         marginal_utility_value_j = self.get_marginal_utility(criterion_j, query_j)
 
         self.total_n_answers += 1
+        # print(marginal_utility_difference_i, marginal_utility_value_j)
 
         if marginal_utility_difference_i > 0:
             # Impossible to compensate the utility difference 
-            if marginal_utility_difference_i > marginal_utility_value_j:
+            if marginal_utility_difference_i > self.coefficients[criterion_j][-1] - marginal_utility_value_j:
                 return None
             else:
                 for break_point in range(self.n_pieces):
                     min_bp_value = self.coefficients[criterion_j][break_point]
                     max_bp_value = self.coefficients[criterion_j][break_point + 1]
-                    if marginal_utility_value_j - min_bp_value >= marginal_utility_difference_i and marginal_utility_value_j - max_bp_value < marginal_utility_difference_i:
+                    if marginal_utility_value_j - marginal_utility_difference_i >= min_bp_value and marginal_utility_value_j - marginal_utility_difference_i < max_bp_value:
                         
-                        dv = marginal_utility_difference_i - marginal_utility_value_j + max_bp_value
+                        dv = marginal_utility_value_j - min_bp_value - marginal_utility_difference_i
                         return self.breakpoints_x[break_point] + (dv / (max_bp_value - min_bp_value)) * (self.breakpoints_x[break_point+1] - self.breakpoints_x[break_point])
         else:
             if -marginal_utility_difference_i > (self.coefficients[criterion_j][-1] - marginal_utility_value_j):
