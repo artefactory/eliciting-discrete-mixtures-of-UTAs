@@ -12,13 +12,13 @@ def get_random_uniform_normalized_vector(num_values, norm_value=1, decimals=3):
     """
     initial_vals = np.round(
         np.random.uniform(0, norm_value, num_values - 1), decimals=decimals
-    )
+    ).astype("float32")
     initial_vals = np.sort(initial_vals)
     vect = [norm_value - initial_vals[-1]]
     for i in range(len(initial_vals) - 1):
         vect.append(initial_vals[-i - 1] - initial_vals[-i - 2])
     vect.append(initial_vals[0])
-    return np.array(vect)
+    return np.array(vect).astype("float32")
 
 
 def piecewise_linear_value(criterion_value, marginal_coefficients, min_x=0, max_x=1):
@@ -35,10 +35,10 @@ def piecewise_linear_value(criterion_value, marginal_coefficients, min_x=0, max_
             )
 
 
-def create_piecewise_linear_coefficients(n_pieces, min_criterion=0.0, max_criterion=1.0):
-    coefficients = np.round(np.random.uniform(min_criterion, max_criterion, n_pieces - 1), decimals=2)
+def create_piecewise_linear_coefficients(n_pieces, min_criterion=0.0, max_criterion=1.0, n_decimals=5):
+    coefficients = np.round(np.random.uniform(min_criterion, max_criterion, n_pieces - 1), decimals=n_decimals)
     coefficients = np.sort(coefficients)
-    coefficients = np.concatenate([[min_criterion], coefficients, [max_criterion]])
+    coefficients = np.concatenate([[min_criterion], coefficients, [max_criterion]]).astype("float32")
     return coefficients
 
 """    @np.vectorize
@@ -52,9 +52,10 @@ def create_piecewise_linear_coefficients(n_pieces, min_criterion=0.0, max_criter
 
 class DecisionMaker:
 
-    def __init__(self, n_criteria, n_pieces):
+    def __init__(self, n_criteria, n_pieces, n_decimals=5):
         self.n_criteria = n_criteria
         self.n_pieces = n_pieces
+        self.n_decimals = n_decimals
 
         self.coefficients = self.build_random_decision_function()
         self.breakpoints_x = np.linspace(0, 1., self.n_pieces+1)
@@ -75,10 +76,12 @@ class DecisionMaker:
         coefficients = []
         for i in range(self.n_criteria):
             marginal_coefficients = create_piecewise_linear_coefficients(n_pieces=self.n_pieces,
-            min_criterion=0., max_criterion=1.)
+            min_criterion=0., max_criterion=1., n_decimals=self.n_decimals)
             coefficients.append(marginal_coefficients)
-        marginal_weights = get_random_uniform_normalized_vector(num_values=self.n_criteria, norm_value=1, decimals=6)
-        return np.array(coefficients) * np.expand_dims(marginal_weights, axis=1)
+        marginal_weights = get_random_uniform_normalized_vector(num_values=self.n_criteria, norm_value=1, decimals=2)
+        while len(np.where(marginal_weights == 0)[0]) > 0:
+            marginal_weights = get_random_uniform_normalized_vector(num_values=self.n_criteria, norm_value=1, decimals=2)
+        return np.round(np.array(coefficients), self.n_decimals) * np.expand_dims(marginal_weights, axis=1)
 
     def plot_decision_function(self, show=True):
         x = np.linspace(0, 1, self.n_pieces+1)

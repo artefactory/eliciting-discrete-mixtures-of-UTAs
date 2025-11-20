@@ -25,7 +25,7 @@ class SyntheticDataGenerator:
         self.instantiate()
 
     def instantiate(self):
-        self.dms = [DecisionMaker(n_criteria=self.n_criteria, n_pieces=self.method_params.get("n_pieces", 5)) for _ in range(self.n_dms)]
+        self.dms = [DecisionMaker(n_criteria=self.n_criteria, n_pieces=self.method_params.get("n_pieces", 5), n_decimals=self.decimals) for _ in range(self.n_dms)]
 
         self._marginal_utilities = lambda x: np.array([[dm.get_marginal_utility(criterion_index=i, criterion_value=x[i]) for i in range(len(x))] for dm in self.dms])
         self._utility = lambda x: np.array([dm.get_total_utility(criteria_vector=x) for dm in self.dms])
@@ -184,7 +184,10 @@ class SyntheticDataGenerator:
         if not isinstance(num_pairs, list):
             num_pairs = np.array([np.ceil(num_pairs / self.n_dms)] * self.n_dms).astype(int)
 
-        for _ in tqdm.trange(num_pairs[0]):
+        count = 0
+        pbar = tqdm.tqdm(total = num_pairs[0])
+        while count < num_pairs[0]:
+        # for _ in tqdm.trange(num_pairs[0]):
             x = np.around(
                 np.random.uniform(0, 1, self.n_criteria), decimals=self.decimals
             )
@@ -192,31 +195,36 @@ class SyntheticDataGenerator:
             uyj = [None for _ in range(self.n_dms)]
             indexes = np.random.permutation(np.arange(len(x)))[:2]
 
-            count = 0
-            while None in uyj:
+            subcount = 0
+            while None in uyj and subcount < 1_000_000:
 
-                uyi_0 = np.random.uniform(0, 1)
+                uyi_0 = np.round(np.random.uniform(0, 1), decimals=self.decimals)
                 for i in range(self.n_dms):
 
                     uyj[i] = self.dms[i].get_indifference_on_two_criteria(criterion_i=indexes[0], criterion_j=indexes[1],
                                                                         query_i=x[indexes[0]], p_i=uyi_0, query_j=x[indexes[1]])
 
-                count += 1
+                subcount += 1
 
-            for i in range(self.n_dms):
+            if None not in uyj:
+                for i in range(self.n_dms):
 
-                y = x.copy()
-                y[indexes[0]] = uyi_0
-                y[indexes[1]] = uyj[i]
+                    y = x.copy()
+                    y[indexes[0]] = uyi_0
+                    y[indexes[1]] = uyj[i]
 
-                X.append(x)
-                Y.append(y)
-                ux = np.around(self.utility(x), decimals=self.decimals)[i]
-                utilities[0].append(ux)
-                utilities[1].append(np.around(self.utility(y), decimals=self.decimals)[i])
-                assert utilities[1][-1] == utilities[0][-1], f"{(np.around(self.utility(y), decimals=self.decimals)[i], )}"
-                populations[i] += 1
-                clusters.append(i)
+                    X.append(x)
+                    Y.append(y)
+                    ux = np.around(self.utility(x), decimals=self.decimals)[i]
+                    utilities[0].append(ux)
+                    utilities[1].append(np.around(self.utility(y), decimals=self.decimals)[i])
+                    assert utilities[1][-1] == utilities[0][-1], f"{(np.around(self.utility(y), decimals=self.decimals)[i], )}"
+                    populations[i] += 1
+                    clusters.append(i)
+
+                    count += 1
+                    pbar.update(1)
+        # pbar.close()
         if verbose > 0:
             print("Clusters Populations", populations)
         additional_info = {}
