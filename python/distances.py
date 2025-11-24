@@ -1570,6 +1570,7 @@ class TwoUTASpaceDiameter(object):
         clustering=None,
         warm_coefficients=None,
         warm_zs=None,
+        min_pente=False,
     ):
         """Estimation of the parameters"""
         n_samples = X.shape[0]
@@ -1592,6 +1593,7 @@ class TwoUTASpaceDiameter(object):
             for count in counts:
                 assert count == 2
         n_couples = int(n_samples // 2)
+        print("N couples:", n_couples)
 
         if verbose == 0:
             self.solver.params.outputflag = 0  # mode muet
@@ -1607,6 +1609,16 @@ class TwoUTASpaceDiameter(object):
             for i in range(n_features)
             for name in ["d1", "d2", "s1", "s2"]
         }
+
+        if warm_coefficients is not None:
+            for key, val in mydist.marginal_coeffs.items():
+                setattr(val, "Start", warm_coefficients[key])
+                mydist.solver.addConstr(val == warm_coefficients[key])
+        elif min_pente is True:
+            for k, v in self.marginal_coeffs.items():
+                if k[2] > 0:
+                    self.solver.addConstr(v >= self.epsilon, name="min_pente")
+        
 
         self.abs_vals = {
             (name, i, j): self.solver.addVar(vtype=gp.GRB.CONTINUOUS, name=f"absval_{name}_{i}_{j}")
@@ -1650,7 +1662,11 @@ class TwoUTASpaceDiameter(object):
             )
             for k in range(n_couples)
         }
-
+        if warm_zs is not None:
+            for val in self.z_s.values():
+                setattr(val, "Start", 0)
+            for val in self.z_d.values():
+                setattr(val, "Start", 0)
         if verbose > 1:
             print("2/ Constraints Definition")
         # [MI - 2]
@@ -1715,76 +1731,127 @@ class TwoUTASpaceDiameter(object):
                                 name=f"estimate_y_{i}_{j}",
                             )
             
-        pref_d1 = {}
-        pref_d1_prime = {}
-        pref_d2 = {}
-        pref_d2_prime = {}
-        pref_s1 = {}
-        pref_s1_prime = {}
-        pref_s2 = {}
-        pref_s2_prime = {}
+        self.pref_d1 = {}
+        self.pref_d1_prime = {}
+        self.pref_d2 = {}
+        self.pref_d2_prime = {}
+        self.pref_s1 = {}
+        self.pref_s1_prime = {}
+        self.pref_s2 = {}
+        self.pref_s2_prime = {}
         for i in range(n_samples):
-            pref_d1["d1", i] = self.solver.addConstr(
-                    gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
-                    - gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
-                    - majoring_value * self.z_d[i // 2]
-                    <= self.epsilon
-                )
-        for i in range(n_samples):
-            pref_d1_prime ["d1", i] = self.solver.addConstr(
-                    gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
-                    - gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
-                    - majoring_value * self.z_d[i // 2]
-                    <= self.epsilon
-                )
-        for i in range(n_samples):
+            if i % 2 == 0:
+                self.pref_d1["d1", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                        - majoring_value * self.z_d[i // 2]
+                        <= self.epsilon, name=f"d1_pref_{i}"
+                    )
+                    
+                self.pref_d1_prime ["d1", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                        - majoring_value * self.z_d[i // 2]
+                        <= self.epsilon, name=f"d1_pref_{i}_"
+                    )
 
-            pref_d2["d2", i] = self.solver.addConstr(
-                    gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
-                    - gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
-                    - majoring_value * (1 - self.z_d[i // 2])
-                    <= self.epsilon
-                )
+                self.pref_d2["d2", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_d[i // 2])
+                        <= self.epsilon, name=f"d2_pref_{i}"
+                    )
 
-        for i in range(n_samples):
-            pref_d2_prime["d2", i] = self.solver.addConstr(
-                    gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
-                    - gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
-                    - majoring_value * (1 - self.z_d[i // 2])
-                    <= self.epsilon
-                )
+                self.pref_d2_prime["d2", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_d[i // 2])
+                        <= self.epsilon, name=f"d2_pref_{i}_"
+                    )
 
-        for i in range(n_samples):
-            pref_s1["s1", i] = self.solver.addConstr(
-                    gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
-                    - gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
-                    - majoring_value * self.z_s[i // 2]
-                    <= self.epsilon
-                )
+                self.pref_s1["s1", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                        - majoring_value * self.z_s[i // 2]
+                        <= self.epsilon, name=f"s1_pref_{i}"
+                    )
 
-        for i in range(n_samples):
-            pref_s1_prime["s1", i] = self.solver.addConstr(
-                    gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
-                    - gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
-                    - majoring_value * self.z_s[i // 2]
-                    <= self.epsilon
-                )
-        
-        for i in range(n_samples):
-            pref_s2["s2", i] = self.solver.addConstr(
-                    gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
-                    - gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
-                    - majoring_value * (1 - self.z_s[i // 2])
-                    <= self.epsilon
-                )
+                self.pref_s1_prime["s1", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                        - majoring_value * self.z_s[i // 2]
+                        <= self.epsilon, name=f"s1_pref_{i}_"
+                    )
+            
+                self.pref_s2["s2", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_s[i // 2])
+                        <= self.epsilon, name=f"s2_pref_{i}"
+                    )
 
-        for i in range(n_samples):
-            pref_s2_prime["s2", i] = self.solver.addConstr(
-                    gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
-                    - gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
-                    - majoring_value * (1 - self.z_s[i // 2])
-                    <= self.epsilon
-                )
+                self.pref_s2_prime["s2", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_s[i // 2])
+                        <= self.epsilon, name=f"s2_pref_{i}_"
+                    )
+            else:
+                self.pref_d1["d1", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_d[i // 2])
+                        <= self.epsilon, name=f"d1_pref_{i}"
+                    )
+                    
+                self.pref_d1_prime ["d1", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_d[i // 2])
+                        <= self.epsilon, name=f"d1_pref_{i}_"
+                    )
+
+                self.pref_d2["d2", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                        - majoring_value * self.z_d[i // 2]
+                        <= self.epsilon, name=f"d2_pref_{i}"
+                    )
+
+                self.pref_d2_prime["d2", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                        - majoring_value * self.z_d[i // 2]
+                        <= self.epsilon, name=f"d2_pref_{i}_"
+                    )
+
+                self.pref_s1["s1", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_s[i // 2])
+                        <= self.epsilon, name=f"s1_pref_{i}"
+                    )
+
+                self.pref_s1_prime["s1", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_s[i // 2])
+                        <= self.epsilon, name=f"s1_pref_{i}_"
+                    )
+            
+                self.pref_s2["s2", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                        - majoring_value * self.z_s[i // 2]
+                        <= self.epsilon, name=f"s2_pref_{i}"
+                    )
+
+                self.pref_s2_prime["s2", i] = self.solver.addConstr(
+                        gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                        - gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                        - majoring_value * self.z_s[i // 2]
+                        <= self.epsilon, name=f"s2_pref_{i}_"
+                    )
 
         for name in [("d1", "s1"), ("d1", "s2"), ("d2", "s1"), ("d2", "s2")]:
             for j in range(self.n_pieces + 1):
