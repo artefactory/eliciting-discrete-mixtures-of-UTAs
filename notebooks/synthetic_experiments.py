@@ -22,21 +22,43 @@ if __name__ == "__main__":
 
         dist = TwoUTASpaceDiameter(n_pieces=5, epsilon=1e-3)
         # dist.solver.setParam("DualReductions", 0)
-        dist.fit_from_coupled_indifferences(X[:length], Y[:length], time_limit=7200, inflexions=np.vstack([np.linspace(0, 1., 6)] * 4), warm_zs=True)
+        dist.fit_from_coupled_indifferences(X[:length], Y[:length], time_limit=10_800, inflexions=np.vstack([np.linspace(0, 1., 6)] * 4), warm_zs=True)
 
-        print(f"ObjVal for length {length}:", dist.solver.ObjVal)
+        print(f"ObjVal for length {length}:", dist.solver.ObjVal, "Optimization Status:", dist.solver.Status)
         plt.figure(figsize=(12, 16))
         for i in range(4):
             plt.subplot(4, 2, i+1)
-            plt.plot([dist.marginal_coeffs["s1", i, k].x for k in range(6)], c="blue")
+            plt.plot([dist.marginal_coeffs["s1", i, k].x for k in range(6)], c="blue", marker="x")
             plt.plot([dist.marginal_coeffs["s2", i, k].x for k in range(6)], c="cyan")
-            plt.plot([dist.marginal_coeffs["d1", i, k].x for k in range(6)], c="red")
+            plt.plot([dist.marginal_coeffs["d1", i, k].x for k in range(6)], c="red", marker="o")
             plt.plot([dist.marginal_coeffs["d2", i, k].x for k in range(6)], c="orange")
 
         for i in range(4):
             plt.subplot(4, 2, i+5)
             plt.plot(generator.dms[0].coefficients[i], c="blue")
             plt.plot(generator.dms[1].coefficients[i], c="orange")
-        plt.title(dist.solver.ObjVal)
-        plt.savefig(f"res_{length}.png")
+        plt.suptitle(dist.solver.ObjVal)
+        plt.savefig(f"res_{length}_{dist.solver.Status}_couple.png")
+        plt.show()
+
+
+        dist2 = TwoUTASpaceDiameter(n_pieces=5, epsilon=1e-4)
+        # dist.solver.setParam("DualReductions", 0)
+        dist2.fit_from_indifferences(X[:length], Y[:length], time_limit=10_800, inflexions=np.vstack([np.linspace(0, 1., 6)] * 4))
+
+        print(f"ObjVal for length {length}:", dist.solver.ObjVal, "Optimization Status:", dist.solver.Status)
+        plt.figure(figsize=(12, 16))
+        for i in range(4):
+            plt.subplot(4, 2, i+1)
+            plt.plot([dist2.marginal_coeffs["s1", i, k].x for k in range(6)], c="blue", marker="x")
+            plt.plot([dist2.marginal_coeffs["s2", i, k].x for k in range(6)], c="cyan")
+            plt.plot([dist2.marginal_coeffs["d1", i, k].x for k in range(6)], c="red", marker="o")
+            plt.plot([dist2.marginal_coeffs["d2", i, k].x for k in range(6)], c="orange")
+
+        for i in range(4):
+            plt.subplot(4, 2, i+5)
+            plt.plot(generator.dms[0].coefficients[i], c="blue")
+            plt.plot(generator.dms[1].coefficients[i], c="orange")
+        plt.suptitle(dist.solver.ObjVal)
+        plt.savefig(f"res_{length}_{dist.solver.Status}_single.png")
         plt.show()
