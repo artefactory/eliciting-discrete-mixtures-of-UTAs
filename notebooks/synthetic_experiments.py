@@ -37,6 +37,6 @@ if __name__ == "__main__":
             plt.subplot(4, 2, i+5)
             plt.plot(generator.dms[0].coefficients[i], c="blue")
             plt.plot(generator.dms[1].coefficients[i], c="orange")
-        plt.title(dist.solver.ObjVal)
+        plt.suptitle(dist.solver.ObjVal)
         plt.savefig(f"res_{length}.png")
         plt.show()
