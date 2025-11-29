@@ -63,7 +63,7 @@ if __name__ == "__main__":
         plt.savefig(f"myres_{length}_{dist.solver.Status}_single.png")
         plt.show()
 
-    X, Y, info = generator.generate_indifferencgees_alldms(num_pairs=200, return_clusters=True, return_utilities=True)
+    # X, Y, info = generator.generate_indifferences_alldms(num_pairs=200, return_clusters=True, return_utilities=True)
 
     for length in [100, 200]:
 

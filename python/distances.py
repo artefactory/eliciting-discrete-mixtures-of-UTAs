@@ -1855,7 +1855,7 @@ class TwoUTASpaceDiameter(object):
             self.inflexions = inflexions
 
         if clustering is not None:
-            values, counts = np.unique(clusterint, return_counts=True)
+            values, counts = np.unique(clustering, return_counts=True)
             for count in counts:
                 assert count == 2
         n_couples = int(n_samples // 2)
@@ -1877,9 +1877,9 @@ class TwoUTASpaceDiameter(object):
         }
 
         if warm_coefficients is not None:
-            for key, val in mydist.marginal_coeffs.items():
+            for key, val in self.marginal_coeffs.items():
                 setattr(val, "Start", warm_coefficients[key])
-                mydist.solver.addConstr(val == warm_coefficients[key])
+                self.solver.addConstr(val == warm_coefficients[key])
         elif min_pente is True:
             for k, v in self.marginal_coeffs.items():
                 if k[2] > 0:
