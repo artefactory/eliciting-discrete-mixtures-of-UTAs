@@ -35,5 +35,5 @@ for ndata in [10, 20, 100, 1_000]:
         "objval": dist.solver.objVal
     }
 
-with open('filename.pickle', 'wb') as handle:
-    pickle.dump(alldist, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('filename.pickle', 'wb') as handle:
+        pickle.dump(alldist, handle, protocol=pickle.HIGHEST_PROTOCOL)

@@ -997,7 +997,9 @@ class TwoUTASpaceDiameter(object):
 
     def instantiate(self):
         """Instantiate the solver"""
+        print("start instantiate")
         solver = gp.Model("UTA")
+        print("instantiated")
         return solver
 
     def fit(
@@ -1007,7 +1009,7 @@ class TwoUTASpaceDiameter(object):
         n_samples = X.shape[0]
         n_features = Y.shape[1]
         self.min, self.max, self.inflexions = self._determine_inflexions(X, Y)
-
+        print("Start fit")
         if verbose == 0:
             self.solver.params.outputflag = 0  # mode muet
 
