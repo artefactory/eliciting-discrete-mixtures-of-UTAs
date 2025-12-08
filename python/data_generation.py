@@ -118,7 +118,6 @@ class SyntheticDataGenerator:
             additional_info["clusters"] = np.array(clusters)
         return np.stack(X), np.stack(Y), additional_info
 
-
     def generate_indifferences(
         self, num_pairs, return_utilities=False, return_clusters=False, verbose=0
     ):
@@ -227,6 +226,81 @@ class SyntheticDataGenerator:
         # pbar.close()
         if verbose > 0:
             print("Clusters Populations", populations)
+        additional_info = {}
+        for i in range(self.n_dms):
+            additional_info[f"coefficients_{i}"] = self.dms[i].coefficients
+
+        if return_utilities:
+            additional_info["utilities_x"] = np.array(utilities)[0]
+            additional_info["utilities_y"] = np.array(utilities)[1]
+        if return_clusters:
+            additional_info["clusters"] = np.array(clusters)
+        return np.stack(X), np.stack(Y), additional_info
+
+    def generate_preferences_alldms(
+        self, num_pairs, return_utilities=False, return_clusters=False, verbose=0
+    ):
+        X, Y = [], []
+
+        utilities = [[], []]
+        clusters = []
+
+        # Useless now that we have clusters
+        num_pairs_by_dm = np.ceil(num_pairs / self.n_dms)
+        n_data = 0
+        while n_data < num_pairs_by_dm:
+            if verbose > 0:
+                print(f"{len(X)} events have been created as of now", end="\r")
+            
+
+            x = np.around(
+                np.random.uniform(0, 1, self.n_criteria), decimals=self.decimals
+            )
+            ux = np.around(self.utility(x), decimals=self.decimals)
+            for i in range(self.n_dms): 
+                added = False
+                while not added:
+                    non_dominance = False
+                    while not non_dominance:
+                        y = np.around(
+                            np.random.uniform(0, 1, self.n_criteria), decimals=self.decimals
+                        )
+                        non_dominance = (np.sum(x-y > 0) != len(x)) & (np.sum(x-y > 0) != 0)
+
+                    uy = np.around(self.utility(y), decimals=self.decimals)
+                    if (ux - uy)[i] > self.gap:
+                        if np.random.randint(1000) / 1000 >= self.noise:
+                            X.append(x)
+                            Y.append(y)
+                            utilities[0].append(ux)
+                            utilities[1].append(uy)
+                        else:
+                            X.append(y)
+                            Y.append(x)
+                            utilities[0].append(uy)
+                            utilities[1].append(ux)
+                        clusters.append(i)
+                        added = True
+
+                    elif (uy - ux)[i] > self.gap:
+                        if np.random.randint(1000) / 1000 >= self.noise:
+                            X.append(y)
+                            Y.append(x)
+                            utilities[0].append(uy)
+                            utilities[1].append(ux)
+                        else:
+                            X.append(x)
+                            Y.append(y)
+                            utilities[0].append(ux)
+                            utilities[1].append(uy)
+                        clusters.append(i)
+                        added = True
+
+                    else:
+                        added = False
+            n_data += 1
+        # if verbose > 0:
+        #     print("Clusters Populations", populations)
         additional_info = {}
         for i in range(self.n_dms):
             additional_info[f"coefficients_{i}"] = self.dms[i].coefficients
