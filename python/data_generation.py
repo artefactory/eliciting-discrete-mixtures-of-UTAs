@@ -237,7 +237,7 @@ class SyntheticDataGenerator:
             additional_info["clusters"] = np.array(clusters)
         return np.stack(X), np.stack(Y), additional_info
 
-    def generate_preferences_all_dms(
+    def generate_preferences_alldms(
         self, num_pairs, return_utilities=False, return_clusters=False, verbose=0
     ):
         X, Y = [], []
