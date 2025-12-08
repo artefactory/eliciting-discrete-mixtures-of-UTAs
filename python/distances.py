@@ -1,3 +1,6 @@
+import json
+import os
+
 import gurobipy as gp
 import numpy as np
 
@@ -233,8 +236,8 @@ class WorstUTA(object):
 
         if sample_weight is not None:
             self.solver.setObjective(
-                gp.quicksum(sigma_err[i] * sample_weight[i] for i in range(n_samples)),
-                gp.GRB.MINIMIZE,
+                gp.quicksum(self.abs_vals[(i, j)] * sample_weight[i] for i in range(n_samples) for j in range(self.n_pieces+1)),
+                gp.GRB.MAXIMIZE,
             )
         else:
             self.solver.setObjective(
@@ -2514,3 +2517,14 @@ class TwoUTASpaceDiameter(object):
         # -- Résolution --
         self.solver.optimize()
         self.status = self.solver.Status
+
+    def save(self, savedir):
+        os.makedirs(savedir, exist_ok=True)
+
+        np.save(os.path.join(savedir, "inflexions.npy"), self.inflexions)
+        for uta_model in ["d1", "d2", "s1", "s2"]:
+            all_weights = [[self.marginal_coeffs[uta_model, i, k].x for k in range(self.n_pieces + 1)] for i in range(self.inflexions.shape[0])]
+            np.save(os.path.join(savedir, f"{uta_model}_weights.npy"), all_weights)
+
+        with open(os.path.join(savedir, "fit_params.json"), "w") as file:
+            json.dump({"optimization_status": self.solver.Status, "optimization_objective": self.solver.ObjVal}, file)
