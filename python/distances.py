@@ -1590,7 +1590,7 @@ class TwoUTASpaceDiameter(object):
             self.inflexions = inflexions
 
         if clustering is not None:
-            values, counts = np.unique(clusterint, return_counts=True)
+            values, counts = np.unique(clustering, return_counts=True)
             for count in counts:
                 assert count == 2
         n_couples = int(n_samples // 2)
@@ -1879,7 +1879,6 @@ class TwoUTASpaceDiameter(object):
         if warm_coefficients is not None:
             for key, val in self.marginal_coeffs.items():
                 setattr(val, "Start", warm_coefficients[key])
-                self.solver.addConstr(val == warm_coefficients[key])
         elif min_pente is True:
             for k, v in self.marginal_coeffs.items():
                 if k[2] > 0:
@@ -2118,6 +2117,378 @@ class TwoUTASpaceDiameter(object):
                         - majoring_value * self.z_s[i // 2]
                         <= self.epsilon, name=f"s2_pref_{i}_"
                     )
+
+        for name in [("d1", "s1"), ("d1", "s2"), ("d2", "s1"), ("d2", "s2")]:
+            for j in range(self.n_pieces + 1):
+                for i in range(n_features):
+                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] >= self.marginal_coeffs[(name[0], i, j)] - self.marginal_coeffs[(name[1], i, j)], name=f"a_{i}_{j}")
+                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] >= - self.marginal_coeffs[(name[0], i, j)] + self.marginal_coeffs[(name[1], i, j)], name=f"b_{i}_{j}")
+                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] <=  self.marginal_coeffs[(name[0], i, j)] - self.marginal_coeffs[(name[1], i, j)] + majoring_value * self.abs_id[(f"{name[0]}_{name[1]}", i, j)], name=f"c_{i}_{j}")
+                    self.solver.addConstr(self.abs_vals[(f"{name[0]}_{name[1]}", i, j)] <=  - self.marginal_coeffs[(name[0], i, j)] + self.marginal_coeffs[(name[1], i, j)] + majoring_value * (1 - self.abs_id[(f"{name[0]}_{name[1]}", i, j)]), name=f"d_{i}_{j}")
+
+        ### Obj
+
+        distance = self.solver.addVar(
+                vtype=gp.GRB.CONTINUOUS, name=f"D"
+            )
+        self.solver.addConstr(distance <= gp.quicksum(self.abs_vals[("d1_s1", i, j)] for i in range(n_features) for j in range(self.n_pieces+1)) + gp.quicksum(self.abs_vals[("d2_s2", i, j)] for i in range(n_features) for j in range(self.n_pieces+1)), name=f"xyz")
+        self.solver.addConstr(distance <= gp.quicksum(self.abs_vals[("d2_s1", i, j)] for i in range(n_features) for j in range(self.n_pieces+1)) + gp.quicksum(self.abs_vals[("d1_s2", i, j)] for i in range(n_features) for j in range(self.n_pieces+1)), name=f"xyz")
+
+        self.solver.setObjective(
+            distance, gp.GRB.MAXIMIZE
+        )
+        self.solver.update()
+
+        # -- Résolution --
+        self.solver.optimize()
+        self.status = self.solver.Status
+
+    def fit_generic(
+        self,
+        X,
+        Y,
+        relation_type="preference",
+        clustering=None,
+        inflexions=None,
+        sample_weight=None,
+        time_limit=None,
+        n_threads=None,
+        verbose=0,
+        majoring_value=10,
+        warm_coefficients=None,
+        warm_zs=None,
+    ):
+        """Estimation of the parameters"""
+        n_samples = X.shape[0]
+        n_features = Y.shape[1]
+
+        if inflexions is None:
+            self.min, self.max, self.inflexions = self._determine_inflexions(X, Y)
+        else:
+            inflexions = np.array(inflexions)
+
+            assert inflexions.shape[0] == n_features
+            assert inflexions.shape[1] == self.n_pieces + 1
+
+            self.min = np.min(inflexions, axis=0)
+            self.max = np.max(inflexions, axis=0)
+            self.inflexions = inflexions
+
+        if clustering is not None:
+            values, counts = np.unique(clustering, return_counts=True)
+            for count in counts:
+                assert count == 2
+            n_couples = int(n_samples // 2)
+            print("N couples:", n_couples)
+        else:
+            n_couples = len(X)
+            clustering = np.arange(0, len(X))
+
+        if verbose == 0:
+            self.solver.params.outputflag = 0  # mode muet
+
+        if time_limit is not None:
+            self.solver.setParam("TimeLimit", time_limit)
+        if n_threads is not None:
+            self.solver.setParam("Threads", n_threads)
+
+        if verbose > 1:
+            print("1/ Variables Definition")
+        self.marginal_coeffs = {    
+            (name, i, j): self.solver.addVar(vtype=gp.GRB.CONTINUOUS, name=f"s_{name}_{i}_{j}")
+            for j in range(self.n_pieces + 1)
+            for i in range(n_features)
+            for name in ["d1", "d2", "s1", "s2"]
+        }
+
+        if warm_coefficients is not None:
+            for key, val in self.marginal_coeffs.items():
+                setattr(val, "Start", warm_coefficients[key])        
+
+        self.abs_vals = {
+            (name, i, j): self.solver.addVar(vtype=gp.GRB.CONTINUOUS, name=f"absval_{name}_{i}_{j}")
+            for j in range(self.n_pieces + 1)
+            for i in range(n_features)
+            for name in ["d1_s1", "d1_s2", "d2_s1", "d2_s2"]
+        }
+        self.abs_id = {
+            (name, i, j): self.solver.addVar(vtype=gp.GRB.BINARY, name=f"absid_{name}_{i}_{j}")
+            for j in range(self.n_pieces + 1)
+            for i in range(n_features)
+            for name in ["d1_s1", "d1_s2", "d2_s1", "d2_s2"]
+        }
+
+        self.estimate_x = {
+            (name, i, j): self.solver.addVar(
+                vtype=gp.GRB.CONTINUOUS, name=f"estimate_x_{name}_{i}_{j}"
+            )
+            for j in range(n_features)
+            for i in range(n_samples)
+            for name in ["d1", "d2", "s1", "s2"]
+        }
+        self.estimate_y = {
+            (name, i, j): self.solver.addVar(
+                vtype=gp.GRB.CONTINUOUS, name=f"estimate_y_{name}_{i}_{j}"
+            )
+            for j in range(n_features)
+            for i in range(n_samples)
+            for name in ["d1", "d2", "s1", "s2"]
+        }
+
+        self.z_s = {
+            k: self.solver.addVar(
+                vtype=gp.GRB.BINARY, name=f"z_s_{k}"
+            )
+            for k in range(n_couples)
+        }
+        self.z_d = {
+            k: self.solver.addVar(
+                vtype=gp.GRB.BINARY, name=f"z_d_{k}"
+            )
+            for k in range(n_couples)
+        }
+        if warm_zs is not None:
+            for val in self.z_s.values():
+                setattr(val, "Start", 0)
+            for val in self.z_d.values():
+                setattr(val, "Start", 0)
+        if verbose > 1:
+            print("2/ Constraints Definition")
+        # [MI - 2]
+        self.zero_bound = {}
+        self.sum_to_one = {}
+        self.monotonicity = {}
+        for name in ["d1", "d2", "s1", "s2"]:
+            for i in range(n_features):
+                self.zero_bound[(name, i)] = self.solver.addConstr(
+                        self.marginal_coeffs[name, i, 0] == 0, name="lower_bound_normalization"
+                    )
+
+            self.sum_to_one[name] = self.solver.addConstr(
+                    (
+                        gp.quicksum(
+                            self.marginal_coeffs[name, i, self.n_pieces] for i in range(n_features)
+                        )
+                    )
+                    == 1,
+                    name="sum_to_one",
+                )
+            for i in range(n_features):
+                self.monotonicity[(name, i)] = {
+                        k: self.solver.addConstr(
+                            self.marginal_coeffs[name, i, k + 1] >= self.marginal_coeffs[name, i, k] + self.lipschitz_coeff,
+                            name="monotonicity",
+                        )
+                        for k in range(self.n_pieces)
+                        }
+
+            # [MI - 4]
+            # [MI - 1']
+            # [MI - 8']
+            if verbose > 1:
+                print("3/ Utility Constraints")
+            # Contraintes de préferences
+            for i in range(n_samples):
+                for j in range(n_features):
+                    for k in range(self.n_pieces):
+                        if self.inflexions[j][k] <= X[i][j] <= self.inflexions[j][k + 1]:
+                            self.solver.addConstr(
+                                self.estimate_x[name, i, j]
+                                == self.marginal_coeffs[name, j, k]
+                                + (
+                                    (X[i][j] - self.inflexions[j][k])
+                                    / (self.inflexions[j][k + 1] - self.inflexions[j][k])
+                                )
+                                * (self.marginal_coeffs[name, j, k + 1] - self.marginal_coeffs[name, j, k]),
+                                name=f"estimate_x_{i}_{j}",
+                            )
+                        if self.inflexions[j][k] <= Y[i][j] <= self.inflexions[j][k + 1]:
+                            self.solver.addConstr(
+                                self.estimate_y[name, i, j]
+                                == self.marginal_coeffs[name, j, k]
+                                + (
+                                    (Y[i][j] - self.inflexions[j][k])
+                                    / (self.inflexions[j][k + 1] - self.inflexions[j][k])
+                                )
+                                * (self.marginal_coeffs[name, j, k + 1] - self.marginal_coeffs[name, j, k]),
+                                name=f"estimate_y_{i}_{j}",
+                            )
+            
+        self.pref_d1 = {}
+        self.pref_d1_prime = {}
+        self.pref_d2 = {}
+        self.pref_d2_prime = {}
+        self.pref_s1 = {}
+        self.pref_s1_prime = {}
+        self.pref_s2 = {}
+        self.pref_s2_prime = {}
+        for i in range(n_samples):
+            if relation_type == "preference":
+                if i % 2 == 0:
+                    self.pref_d1["d1", i] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                            + majoring_value * self.z_d[clustering[i]]
+                            >= self.epsilon, name=f"d1_pref_{i}"
+                        )
+                    
+                    self.pref_d2["d2", i] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                            + majoring_value * (1 - self.z_d[clustering[i]])
+                            >= self.epsilon, name=f"d2_pref_{i}"
+                        )
+
+                    self.pref_s1["s1", i] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                            + majoring_value * self.z_s[clustering[i]]
+                            >= self.epsilon, name=f"s1_pref_{i}"
+                        )
+                
+                    self.pref_s2["s2", i] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                            + majoring_value * (1 - self.z_s[clustering[i]])
+                            >= self.epsilon, name=f"s2_pref_{i}"
+                        )
+
+                else:
+                    self.pref_d1["d1", i] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                            + majoring_value * (1 - self.z_d[clustering[i]])
+                            >= self.epsilon, name=f"d1_pref_{i}"
+                        )
+
+                    self.pref_d2["d2", i] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                            + majoring_value * self.z_d[clustering[i]]
+                            >= self.epsilon, name=f"d2_pref_{i}"
+                        )
+
+                    self.pref_s1["s1", i] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                        + majoring_value * (1 - self.z_s[clustering[i]])
+                            >= self.epsilon, name=f"s1_pref_{i}"
+                        )
+                
+                    self.pref_s2["s2", i] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                            + majoring_value * self.z_s[clustering[i]]
+                            >= self.epsilon, name=f"s2_pref_{i}"
+                        )
+            elif relation_type == "indifference":
+                if i % 2 == 0:
+                    self.pref_d1["d1", i, "xy"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                            - majoring_value * self.z_d[clustering[i]]
+                            <= self.epsilon, name=f"d1_pref_{i}"
+                        )
+                    self.pref_d1["d1", i, "yx"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                            - majoring_value * self.z_d[clustering[i]]
+                            <= self.epsilon, name=f"d1_pref_{i}"
+                        )
+                    
+                    self.pref_d2["d2", i, "xy"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                            - majoring_value * (1 - self.z_d[clustering[i]])
+                            <= self.epsilon, name=f"d2_pref_{i}"
+                        )
+                    self.pref_d2["d2", i, "yx"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                            - majoring_value * (1 - self.z_d[clustering[i]])
+                            <= self.epsilon, name=f"d2_pref_{i}"
+                        )
+
+                    self.pref_s1["s1", i, "xy"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                            - majoring_value * self.z_s[clustering[i]]
+                            <= self.epsilon, name=f"s1_pref_{i}"
+                        )
+                    self.pref_s1["s1", i, "yx"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                            - majoring_value * self.z_s[clustering[i]]
+                            <= self.epsilon, name=f"s1_pref_{i}"
+                        )
+                
+                    self.pref_s2["s2", i, "xy"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                            - majoring_value * (1 - self.z_s[clustering[i]])
+                            <= self.epsilon, name=f"s2_pref_{i}"
+                        )
+                    self.pref_s2["s2", i, "yx"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                            - majoring_value * (1 - self.z_s[clustering[i]])
+                            <= self.epsilon, name=f"s2_pref_{i}"
+                        )
+
+                else:
+                    self.pref_d1["d1", i, "xy"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                            - majoring_value * (1 - self.z_d[clustering[i]])
+                            <= self.epsilon, name=f"d1_pref_{i}"
+                        )
+                    self.pref_d1["d1", i, "yx"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_y[("d1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_x[("d1", i, j)] for j in range(n_features)])
+                            - majoring_value * (1 - self.z_d[clustering[i]])
+                            <= self.epsilon, name=f"d1_pref_{i}"
+                        )
+
+                    self.pref_d2["d2", i, "xy"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                            - majoring_value * self.z_d[clustering[i]]
+                            <= self.epsilon, name=f"d2_pref_{i}"
+                        )
+                    self.pref_d2["d2", i, "yx"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_y[("d2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_x[("d2", i, j)] for j in range(n_features)])
+                            - majoring_value * self.z_d[clustering[i]]
+                            <= self.epsilon, name=f"d2_pref_{i}"
+                        )
+
+                    self.pref_s1["s1", i, "xy"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_s[clustering[i]])
+                            <= self.epsilon, name=f"s1_pref_{i}"
+                        )
+                    self.pref_s1["s1", i, "yx"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_y[("s1", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_x[("s1", i, j)] for j in range(n_features)])
+                        - majoring_value * (1 - self.z_s[clustering[i]])
+                            <= self.epsilon, name=f"s1_pref_{i}"
+                        )
+                
+                    self.pref_s2["s2", i, "xy"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                            - majoring_value * self.z_s[clustering[i]]
+                            <= self.epsilon, name=f"s2_pref_{i}"
+                        )
+                    self.pref_s2["s2", i, "yx"] = self.solver.addConstr(
+                            gp.quicksum([self.estimate_y[("s2", i, j)] for j in range(n_features)])
+                            - gp.quicksum([self.estimate_x[("s2", i, j)] for j in range(n_features)])
+                            - majoring_value * self.z_s[clustering[i]]
+                            <= self.epsilon, name=f"s2_pref_{i}"
+                        )
+            else:
+                raise ValueError("Unknown relation_type")
 
         for name in [("d1", "s1"), ("d1", "s2"), ("d2", "s1"), ("d2", "s2")]:
             for j in range(self.n_pieces + 1):
