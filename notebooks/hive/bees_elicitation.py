@@ -65,50 +65,80 @@ if __name__ == "__main__":
             os.makedirs(model_save_dir)
             logging.info(f">>> Starting data length {data_length} of loop {run_i}.")
 
-            dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
-            # dist.solver.setParam("DualReductions", 0)
-            dist1.fit_generic(X_indiff[:data_length],
-                            Y_indiff[:data_length],
-                            time_limit=time_limit,
-                            inflexions=inflexions,
-                            relation_type="indifference",
-                            clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
+            try:
+                with open(os.path.join(model_save_dir, "end.json"), "r") as file:
+                    results = json.load(file)
+                if not results["training_finished"]:
+                    raise ValueError
+            except:
 
-            dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
-            logging.info("Model 1 trained & saved")
+                try:
+                    with open(os.path.join(model_sav_dir, "indiff_coupled", "fit_params.json"), "r") as file:
+                        is_fitted = json.load(file)["optimization_objective"]
+                except:
+                    dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
+                    # dist.solver.setParam("DualReductions", 0)
+                    dist1.fit_generic(X_indiff[:data_length],
+                                    Y_indiff[:data_length],
+                                    time_limit=time_limit,
+                                    inflexions=inflexions,
+                                    relation_type="indifference",
+                                    clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
 
-            dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
-            # dist.solver.setParam("DualReductions", 0)
-            dist2.fit_generic(X_indiff[:data_length],
-                            Y_indiff[:data_length],
-                            time_limit=time_limit,
-                            inflexions=inflexions,
-                            relation_type="indifference"
-                            )
+                    dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
+                    logging.info("Model 1 trained & saved")
 
-            dist2.save(savedir=f"{model_save_dir}/indiff_singled")
-            logging.info("Model 2 trained & saved")
 
-            dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
-            # dist.solver.setParam("DualReductions", 0)
-            dist3.fit_generic(X_pref[:data_length],
-                            Y_pref[:data_length],
-                            time_limit=time_limit,
-                            inflexions=inflexions,
-                            relation_type="preference",
-                            clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
+                try:
+                    with open(os.path.join(model_sav_dir, "indiff_singled", "fit_params.json"), "r") as file:
+                        is_fitted = json.load(file)["optimization_objective"]
+                except:
 
-            dist3.save(savedir=f"{model_save_dir}/pref_coupled")
-            logging.info("Model 3 trained & saved")
+                    dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
+                    # dist.solver.setParam("DualReductions", 0)
+                    dist2.fit_generic(X_indiff[:data_length],
+                                    Y_indiff[:data_length],
+                                    time_limit=time_limit,
+                                    inflexions=inflexions,
+                                    relation_type="indifference"
+                                    )
 
-            dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
-            # dist.solver.setParam("DualReductions", 0)
-            dist4.fit_generic(X_pref[:data_length],
-                            Y_pref[:data_length],
-                            time_limit=time_limit,
-                            inflexions=inflexions,
-                            relation_type="preference"
-                            )
+                    dist2.save(savedir=f"{model_save_dir}/indiff_singled")
+                    logging.info("Model 2 trained & saved")
 
-            dist4.save(savedir=f"{model_save_dir}/pref_singled")
-            logging.info("Model 4 trained & saved")
+
+                try:
+                    with open(os.path.join(model_sav_dir, "pref_coupled", "fit_params.json"), "r") as file:
+                        is_fitted = json.load(file)["optimization_objective"]
+                except:
+                        
+                    dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
+                    # dist.solver.setParam("DualReductions", 0)
+                    dist3.fit_generic(X_pref[:data_length],
+                                    Y_pref[:data_length],
+                                    time_limit=time_limit,
+                                    inflexions=inflexions,
+                                    relation_type="preference",
+                                    clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
+
+                    dist3.save(savedir=f"{model_save_dir}/pref_coupled")
+                    logging.info("Model 3 trained & saved")
+
+                try:
+                    with open(os.path.join(model_sav_dir, "pref_singled", "fit_params.json"), "r") as file:
+                        is_fitted = json.load(file)["optimization_objective"]
+                except:
+                    dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
+                    # dist.solver.setParam("DualReductions", 0)
+                    dist4.fit_generic(X_pref[:data_length],
+                                    Y_pref[:data_length],
+                                    time_limit=time_limit,
+                                    inflexions=inflexions,
+                                    relation_type="preference"
+                                    )
+
+                    dist4.save(savedir=f"{model_save_dir}/pref_singled")
+                    logging.info("Model 4 trained & saved")
+
+                with open(os.path.join(model_save_dir, "end.json"), "w") as file:
+                    json.dump({"training_finished": True}, file)
