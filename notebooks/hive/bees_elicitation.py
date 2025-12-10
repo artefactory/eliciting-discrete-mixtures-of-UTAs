@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import pickle
@@ -34,35 +35,43 @@ if __name__ == "__main__":
 
     for run_i in range(n_runs):
         logging.info(f"Starting loop n°{run_i}")
-        save_dir = os.path.join(main_save_dir, f"run_b{run_i}")
-        os.makedirs(save_dir)
-        ### Setup Data Generator
-        data_generator = SyntheticDataGenerator(
-            n_dms=n_dms,
-            n_criteria=n_criteria,
-            method_params=method_params,
-            gap=data_generation_gap,
-            decimals=precision_decimals
-        )
+        save_dir = os.path.join(main_save_dir, f"run_{run_i}")
 
-        # Generate Data: indifferences & preferences
-        X_indiff, Y_indiff, info_indiff = data_generator.generate_indifferences_alldms(num_pairs=np.max(n_data), return_clusters=True, return_utilities=True)
+        if os.path.isdir(save_dir):
+            X_indiff = np.load(os.path.join(save_dir, "X_indiff.npy"))
+            Y_indiff = np.load(os.path.join(save_dir, "Y_indiff.npy"))
+		
+            X_pref = np.load(os.path.join(save_dir, "X_pref.npy"))
+            Y_pref = np.load(os.path.join(save_dir, "Y_pref.npy"))
+        else:
+            os.makedirs(save_dir)
+            ### Setup Data Generator
+            data_generator = SyntheticDataGenerator(
+                n_dms=n_dms,
+                n_criteria=n_criteria,
+                method_params=method_params,
+                gap=data_generation_gap,
+                decimals=precision_decimals
+            )
 
-        np.save(os.path.join(save_dir, "X_indiff.npy"), X_indiff)
-        np.save(os.path.join(save_dir, "Y_indiff.npy"), Y_indiff)
-        with open(os.path.join(save_dir, "info_indiff.pickle"), "wb") as file:
-            pickle.dump(info_indiff, file)
+            # Generate Data: indifferences & preferences
+            X_indiff, Y_indiff, info_indiff = data_generator.generate_indifferences_alldms(num_pairs=np.max(n_data), return_clusters=True, return_utilities=True)
 
-        X_pref, Y_pref, info_pref= data_generator.generate_preferences_alldms(num_pairs=np.max(n_data), return_clusters=True, return_utilities=True)
-        np.save(os.path.join(save_dir, "X_pref.npy"), X_pref)
-        np.save(os.path.join(save_dir, "Y_pref.npy"), Y_pref)
-        with open(os.path.join(save_dir, "info_pref.pickle"), "wb") as file:
-            pickle.dump(info_pref, file)
+            np.save(os.path.join(save_dir, "X_indiff.npy"), X_indiff)
+            np.save(os.path.join(save_dir, "Y_indiff.npy"), Y_indiff)
+            with open(os.path.join(save_dir, "info_indiff.pickle"), "wb") as file:
+                pickle.dump(info_indiff, file)
 
-        logging.info(f"Data drawn & saved in folder {save_dir}")
+            X_pref, Y_pref, info_pref= data_generator.generate_preferences_alldms(num_pairs=np.max(n_data), return_clusters=True, return_utilities=True)
+            np.save(os.path.join(save_dir, "X_pref.npy"), X_pref)
+            np.save(os.path.join(save_dir, "Y_pref.npy"), Y_pref)
+            with open(os.path.join(save_dir, "info_pref.pickle"), "wb") as file:
+                pickle.dump(info_pref, file)
+
+            logging.info(f"Data drawn & saved in folder {save_dir}")
         for data_length in n_data:
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
-            os.makedirs(model_save_dir)
+            os.makedirs(model_save_dir, exist_ok=True)
             logging.info(f">>> Starting data length {data_length} of loop {run_i}.")
 
             try:
