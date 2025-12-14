@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 import os
@@ -33,9 +34,17 @@ if __name__ == "__main__":
     preferences_lower_bound = 1e-3
     lipschitz_coefficient = 1e-4
 
+    parser = argparse.ArgumentParser(
+                    prog='Elicit-World',
+                    description='Synthetic Experiments',
+                    epilog='> finished all runs <')
+    parser.add_argument("-f", "--flag", default="z", type=str)
+    args = parser.parse_args()
+    flag = args.flag
+    
     for run_i in range(n_runs):
-        logging.info(f"Starting loop n°{run_i}")
-        save_dir = os.path.join(main_save_dir, f"run_{run_i}")
+        logging.warning(f"Starting loop n°{run_i}")
+        save_dir = os.path.join(main_save_dir, f"run_{flag}{run_i}")
 
         if os.path.isdir(save_dir):
             X_indiff = np.load(os.path.join(save_dir, "X_indiff.npy"))
@@ -68,11 +77,11 @@ if __name__ == "__main__":
             with open(os.path.join(save_dir, "info_pref.pickle"), "wb") as file:
                 pickle.dump(info_pref, file)
 
-            logging.info(f"Data drawn & saved in folder {save_dir}")
+            logging.warning(f"Data drawn & saved in folder {save_dir}")
         for data_length in n_data:
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
-            logging.info(f">>> Starting data length {data_length} of loop {run_i}.")
+            logging.warning(f">>> Starting data length {data_length} of loop {run_i}.")
 
             try:
                 with open(os.path.join(model_save_dir, "end.json"), "r") as file:
@@ -82,7 +91,7 @@ if __name__ == "__main__":
             except:
 
                 try:
-                    with open(os.path.join(model_sav_dir, "indiff_coupled", "fit_params.json"), "r") as file:
+                    with open(os.path.join(model_save_dir, "indiff_coupled", "fit_params.json"), "r") as file:
                         is_fitted = json.load(file)["optimization_objective"]
                 except:
                     dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
@@ -95,11 +104,11 @@ if __name__ == "__main__":
                                     clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
 
                     dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
-                    logging.info("Model 1 trained & saved")
+                    logging.warning(f"Model 1 trained & saved in {model_save_dir}/indiff_coupled")
 
 
                 try:
-                    with open(os.path.join(model_sav_dir, "indiff_singled", "fit_params.json"), "r") as file:
+                    with open(os.path.join(model_save_dir, "indiff_singled", "fit_params.json"), "r") as file:
                         is_fitted = json.load(file)["optimization_objective"]
                 except:
 
@@ -113,11 +122,11 @@ if __name__ == "__main__":
                                     )
 
                     dist2.save(savedir=f"{model_save_dir}/indiff_singled")
-                    logging.info("Model 2 trained & saved")
+                    logging.warning(f"Model 2 trained & saved in {model_save_dir}/indiff_singled")
 
 
                 try:
-                    with open(os.path.join(model_sav_dir, "pref_coupled", "fit_params.json"), "r") as file:
+                    with open(os.path.join(model_save_dir, "pref_coupled", "fit_params.json"), "r") as file:
                         is_fitted = json.load(file)["optimization_objective"]
                 except:
                         
@@ -131,10 +140,10 @@ if __name__ == "__main__":
                                     clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
 
                     dist3.save(savedir=f"{model_save_dir}/pref_coupled")
-                    logging.info("Model 3 trained & saved")
+                    logging.warning(f"Model 3 trained & saved in {model_save_dir}/pref_coupled")
 
                 try:
-                    with open(os.path.join(model_sav_dir, "pref_singled", "fit_params.json"), "r") as file:
+                    with open(os.path.join(model_save_dir, "pref_singled", "fit_params.json"), "r") as file:
                         is_fitted = json.load(file)["optimization_objective"]
                 except:
                     dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
@@ -147,7 +156,7 @@ if __name__ == "__main__":
                                     )
 
                     dist4.save(savedir=f"{model_save_dir}/pref_singled")
-                    logging.info("Model 4 trained & saved")
+                    logging.warning(f"Model 4 trained & saved in {model_save_dir}/pref_singled")
 
                 with open(os.path.join(model_save_dir, "end.json"), "w") as file:
                     json.dump({"training_finished": True}, file)

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=elicit
+#SBATCH --job-name=elicitb
 #SBATCH --output=/gpfs/workdir/auriauvi/honey/%x_%j.out
 #SBATCH --error=/gpfs/workdir/auriauvi/honey/error_%x_%j.txt
 #SBATCH --partition=cpu_long
@@ -15,4 +15,4 @@ module load python/3.9.10/gcc-11.2.0
 source /gpfs/users/auriauvi/.venv/guro/bin/activate
 cd /gpfs/users/auriauvi/eliciting-discrete-mixtures-of-UTAs/notebooks/hive
 
-python -u bees_elicitation.py
+python -u bees_elicitation.py --flag b
