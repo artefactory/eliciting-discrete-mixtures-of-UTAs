@@ -30,7 +30,7 @@ if __name__ == "__main__":
     lipschitz_coefficient = 1e-4
 
     for run_i in range(n_runs):
-        logging.info(f"Starting loop n°{run_i}")
+        logging.warning(f"Starting loop n°{run_i}")
         save_dir = os.path.join(main_save_dir, f"run_{run_i}")
         os.makedirs(save_dir)
         ### Setup Data Generator
@@ -56,11 +56,11 @@ if __name__ == "__main__":
         with open(os.path.join(save_dir, "info_pref.pickle"), "wb") as file:
             pickle.dump(info_pref, file)
 
-        logging.info(f"Data drawn & saved in folder {save_dir}")
+        logging.warning(f"Data drawn & saved in folder {save_dir}")
         for data_length in n_data:
             model_save_dir = os.path.join(main_save_dir, f"run_{run_i}", f"ndata_{data_length}")
             os.makedirs(main_save_dir)
-            logging.info(f">>> Starting data length {data_length} of loop {run_i}.")
+            logging.warning(f">>> Starting data length {data_length} of loop {run_i}.")
 
             dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
             # dist.solver.setParam("DualReductions", 0)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
                             clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
 
             dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
-            logging.info("Model 1 trained & saved")
+            logging.warning("Model 1 trained & saved")
 
             dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
             # dist.solver.setParam("DualReductions", 0)
@@ -84,7 +84,7 @@ if __name__ == "__main__":
                             )
 
             dist2.save(savedir=f"{model_save_dir}/indiff_singled")
-            logging.info("Model 2 trained & saved")
+            logging.warning("Model 2 trained & saved")
 
             dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
             # dist.solver.setParam("DualReductions", 0)
@@ -96,7 +96,7 @@ if __name__ == "__main__":
                             clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
 
             dist3.save(savedir=f"{model_save_dir}/pref_coupled")
-            logging.info("Model 3 trained & saved")
+            logging.warning("Model 3 trained & saved")
 
             dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
             # dist.solver.setParam("DualReductions", 0)
@@ -108,4 +108,4 @@ if __name__ == "__main__":
                             )
 
             dist4.save(savedir=f"{model_save_dir}/pref_singled")
-            logging.info("Model 4 trained & saved")
+            logging.warning("Model 4 trained & saved")
