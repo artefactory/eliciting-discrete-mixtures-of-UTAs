@@ -20,7 +20,8 @@ if __name__ == "__main__":
 
     ### Parameters
 
-    main_save_dir = "/gpfs/workdir/auriauvi/honey"
+    # main_save_dir = "/gpfs/workdir/auriauvi/honey"
+    main_save_dir = "/data/workspace/vincent/elicit"
     n_runs = 2
     n_data = [32, 128, 512, 2048]
     time_limit = 10_800
@@ -102,8 +103,11 @@ if __name__ == "__main__":
                                     inflexions=inflexions,
                                     relation_type="indifference",
                                     clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
-
-                    dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
+                    try:
+                        dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
+                    except:
+                        logging.error(dist1.solver.Status)
+                        dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
                     logging.warning(f"Model 1 trained & saved in {model_save_dir}/indiff_coupled")
 
 
@@ -120,8 +124,11 @@ if __name__ == "__main__":
                                     inflexions=inflexions,
                                     relation_type="indifference"
                                     )
-
-                    dist2.save(savedir=f"{model_save_dir}/indiff_singled")
+                    try:
+                        dist2.save(savedir=f"{model_save_dir}/indiff_singled")
+                    except:
+                        logging.error(dist2.solver.Status)
+                        dist2.save(savedir=f"{model_save_dir}/indiff_singled")
                     logging.warning(f"Model 2 trained & saved in {model_save_dir}/indiff_singled")
 
 
@@ -130,7 +137,7 @@ if __name__ == "__main__":
                         is_fitted = json.load(file)["optimization_objective"]
                 except:
                         
-                    dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
+                    dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, warm_zs=True)
                     # dist.solver.setParam("DualReductions", 0)
                     dist3.fit_generic(X_pref[:data_length],
                                     Y_pref[:data_length],
@@ -139,14 +146,18 @@ if __name__ == "__main__":
                                     relation_type="preference",
                                     clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
 
-                    dist3.save(savedir=f"{model_save_dir}/pref_coupled")
+                    try:
+                        dist3.save(savedir=f"{model_save_dir}/pref_coupled")
+                    except:
+                        logging.error(dist3.solver.status)
+                        dist3.save(savedir=f"{model_save_dir}/pref_coupled")
                     logging.warning(f"Model 3 trained & saved in {model_save_dir}/pref_coupled")
 
                 try:
                     with open(os.path.join(model_save_dir, "pref_singled", "fit_params.json"), "r") as file:
                         is_fitted = json.load(file)["optimization_objective"]
                 except:
-                    dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
+                    dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, warm_zs=True)
                     # dist.solver.setParam("DualReductions", 0)
                     dist4.fit_generic(X_pref[:data_length],
                                     Y_pref[:data_length],
@@ -154,8 +165,11 @@ if __name__ == "__main__":
                                     inflexions=inflexions,
                                     relation_type="preference"
                                     )
-
-                    dist4.save(savedir=f"{model_save_dir}/pref_singled")
+                    try:
+                        dist4.save(savedir=f"{model_save_dir}/pref_singled")
+                    except:
+                        logging.error(dist4.solver.Status)
+                        dist4.save(savedir=f"{model_save_dir}/pref_singled")
                     logging.warning(f"Model 4 trained & saved in {model_save_dir}/pref_singled")
 
                 with open(os.path.join(model_save_dir, "end.json"), "w") as file:

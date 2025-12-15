@@ -2251,10 +2251,22 @@ class TwoUTASpaceDiameter(object):
             for k in range(n_couples)
         }
         if warm_zs is not None:
-            for val in self.z_s.values():
-                setattr(val, "Start", 0)
-            for val in self.z_d.values():
-                setattr(val, "Start", 0)
+            if len(X) == n_couples:
+                for i, val in enumerate(self.z_s.values()):
+                    if i % 2 == 0:
+                        setattr(val, "Start", 0)
+                    else:
+                        setattr(val, "Start", 1)
+                for i, val in enumerate(self.z_d.values()):
+                    if i % 2 == 0:
+                        setattr(val, "Start", 0)
+                    else:
+                        setattr(val, "Start", 1)
+            else:
+                for val in self.z_s.values():
+                    setattr(val, "Start", 0)
+                for val in self.z_d.values():
+                    setattr(val, "Start", 0)
         if verbose > 1:
             print("2/ Constraints Definition")
         # [MI - 2]
