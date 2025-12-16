@@ -20,8 +20,8 @@ if __name__ == "__main__":
 
     ### Parameters
 
-    # main_save_dir = "/gpfs/workdir/auriauvi/honey"
-    main_save_dir = "/data/workspace/vincent/elicit"
+    main_save_dir = "/gpfs/workdir/auriauvi/honey"
+    # main_save_dir = "/data/workspace/vincent/elicit"
     n_runs = 2
     n_data = [32, 128, 512, 2048]
     time_limit = 10_800
@@ -137,13 +137,13 @@ if __name__ == "__main__":
                         is_fitted = json.load(file)["optimization_objective"]
                 except:
                         
-                    dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, warm_zs=True)
+                    dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
                     # dist.solver.setParam("DualReductions", 0)
                     dist3.fit_generic(X_pref[:data_length],
                                     Y_pref[:data_length],
                                     time_limit=time_limit,
                                     inflexions=inflexions,
-                                    relation_type="preference",
+                                    relation_type="preference", warm_zs=True,
                                     clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
 
                     try:
@@ -163,7 +163,7 @@ if __name__ == "__main__":
                                     Y_pref[:data_length],
                                     time_limit=time_limit,
                                     inflexions=inflexions,
-                                    relation_type="preference"
+                                    relation_type="preference", warm_zs=True
                                     )
                     try:
                         dist4.save(savedir=f"{model_save_dir}/pref_singled")
