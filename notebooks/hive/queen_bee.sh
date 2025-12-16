@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=elicit
-#SBATCH --output=/gpfs/workdir/auriauvi/honey/%x_%j.out
-#SBATCH --error=/gpfs/workdir/auriauvi/honey/error_%x_%j.txt
+#SBATCH --output=/gpfs/workdir/auriauvi/honey/logs/%x_%j.out
+#SBATCH --error=/gpfs/workdir/auriauvi/honey/logs/error_%x_%j.txt
 #SBATCH --partition=cpu_long
 #SBATCH --ntasks=1
 
