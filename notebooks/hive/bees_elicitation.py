@@ -13,6 +13,8 @@ import numpy as np
 from python.data_generation import SyntheticDataGenerator
 from python.distances import TwoUTASpaceDiameter
 
+from .host_config import get_xp_savedir
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +22,9 @@ if __name__ == "__main__":
 
     ### Parameters
 
-    main_save_dir = "/gpfs/workdir/auriauvi/honey"
+    # main_save_dir = "/gpfs/workdir/auriauvi/honey"
     # main_save_dir = "/data/workspace/vincent/elicit"
+    main_save_dir = get_xp_savedir()
     n_runs = 2
     n_data = [32, 128, 512, 2048]
     time_limit = 10_800
