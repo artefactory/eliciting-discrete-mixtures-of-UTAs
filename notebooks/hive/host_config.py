@@ -16,4 +16,5 @@ def get_xp_savedir():
     try:
         return XP_savedir[current_host]
     except:
-        raise ValueError(f"Running platform {current_host} unknown.")
+        # raise ValueError(f"Running platform {current_host} unknown.")
+        return XP_savedir["ruche01.cluster"]
