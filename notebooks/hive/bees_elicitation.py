@@ -34,7 +34,7 @@ if __name__ == "__main__":
     n_criteria = 4
     data_generation_gap = 0.001
     precision_decimals = 3
-    indifferences_higher_bound = 1e-5
+    indifferences_higher_bound = 2e-5
     preferences_lower_bound = 1e-3
     lipschitz_coefficient = 1e-4
 
