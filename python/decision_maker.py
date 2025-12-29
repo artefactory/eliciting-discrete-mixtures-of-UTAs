@@ -83,6 +83,11 @@ class DecisionMaker:
             marginal_weights = get_random_uniform_normalized_vector(num_values=self.n_criteria, norm_value=1, decimals=2)
         return np.round(np.array(coefficients), self.n_decimals) * np.expand_dims(marginal_weights, axis=1)
 
+    def load_from_parameters(self, coefficients, breakpoints_x=None):
+        self.coefficients = coefficients
+        # self.breakpoints_x = breakpoints_x
+
+
     def plot_decision_function(self, show=True):
         x = np.linspace(0, 1, self.n_pieces+1)
 
