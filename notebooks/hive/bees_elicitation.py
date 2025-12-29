@@ -26,7 +26,8 @@ if __name__ == "__main__":
     # main_save_dir = "/data/workspace/vincent/elicit"
     main_save_dir = get_xp_savedir()
     n_runs = 10
-    n_data = [32, 128, 512, 2048]
+    indiff_n_data = [32, 64, 128, 512, 2048]
+    pref_n_data = [32, 128, 512, 2048, 4096]
     time_limit = 10_800
     inflexions = np.vstack([np.linspace(0, 1., 6)] * 4)
     n_dms = 2
@@ -34,9 +35,11 @@ if __name__ == "__main__":
     n_criteria = 4
     data_generation_gap = 0.001
     precision_decimals = 3
-    indifferences_higher_bound = 1e-5
+    indifferences_higher_bound = 2e-5
     preferences_lower_bound = 1e-3
     lipschitz_coefficient = 1e-4
+
+    n_threads = 16
 
     parser = argparse.ArgumentParser(
                     prog='Elicit-World',
@@ -56,6 +59,50 @@ if __name__ == "__main__":
 		
             X_pref = np.load(os.path.join(save_dir, "X_pref.npy"))
             Y_pref = np.load(os.path.join(save_dir, "Y_pref.npy"))
+
+            if len(X_indiff) < 2*np.max(np.concatenate([indiff_n_data, pref_n_data])) or len(X_pref) < 2*np.max(np.concatenate([indiff_n_data, pref_n_data])):
+                logging.warning(f"Data not found in folder {save_dir}, regenerating data.")
+                data_generator = SyntheticDataGenerator(
+                    n_dms=n_dms,
+                    n_criteria=n_criteria,
+                    method_params=method_params,
+                    gap=data_generation_gap,
+                    decimals=precision_decimals
+                )
+            with open(os.path.join(save_dir, "info_indiff.pickle"), "rb") as file:
+                info_indiff = pickle.load(file)
+            with open(os.path.join(save_dir, "info_pref.pickle"), "rb") as file:
+                info_pref = pickle.load(file)
+            data_generator.dms[0].load_from_parameters(info_indiff["coefficients_0"])
+            data_generator.dms[1].load_from_parameters(info_indiff["coefficients_1"])
+
+            X_indiff_2, Y_indiff_2, info_indiff_2 = data_generator.generate_indifferences_alldms(num_pairs=2*np.max(np.concatenate([indiff_n_data, pref_n_data])), return_clusters=True, return_utilities=True)
+            X_indiff = np.concatenate([X_indiff, X_indiff_2], axis=0)
+            Y_indiff = np.concatenate([Y_indiff, Y_indiff_2], axis=0)
+
+            assert (info_indiff_2["coefficients_0"] == info_indiff["coefficients_0"]).all()
+            for key in ['utilities_x', 'utilities_y', 'clusters']:
+                info_indiff[key] = np.concatenate([info_indiff[key], info_indiff_2[key]], axis=0)
+
+            
+            np.save(os.path.join(save_dir, "X_indiff.npy"), X_indiff)
+            np.save(os.path.join(save_dir, "Y_indiff.npy"), Y_indiff)
+            with open(os.path.join(save_dir, "info_indiff.pickle"), "wb") as file:
+                pickle.dump(info_indiff, file)
+
+            X_pref_2, Y_pref_2, info_pref_2 = data_generator.generate_preferences_alldms(num_pairs=2*np.max(np.concatenate([indiff_n_data, pref_n_data])), return_clusters=True, return_utilities=True)
+            
+            assert (info_pref_2["coefficients_0"] == info_pref["coefficients_0"]).all()
+            X_pref = np.concatenate([X_pref, X_pref_2], axis=0)
+            Y_pref = np.concatenate([Y_pref, Y_pref_2], axis=0)
+            for key in ['utilities_x', 'utilities_y', 'clusters']:
+                info_pref[key] = np.concatenate([info_pref[key], info_pref_2[key]], axis=0)
+            
+            np.save(os.path.join(save_dir, "X_pref.npy"), X_pref)
+            np.save(os.path.join(save_dir, "Y_pref.npy"), Y_pref)
+            with open(os.path.join(save_dir, "info_pref.pickle"), "wb") as file:
+                pickle.dump(info_pref, file)
+
         else:
             os.makedirs(save_dir)
             ### Setup Data Generator
@@ -68,21 +115,21 @@ if __name__ == "__main__":
             )
 
             # Generate Data: indifferences & preferences
-            X_indiff, Y_indiff, info_indiff = data_generator.generate_indifferences_alldms(num_pairs=np.max(n_data), return_clusters=True, return_utilities=True)
+            X_indiff, Y_indiff, info_indiff = data_generator.generate_indifferences_alldms(num_pairs=2*np.max(np.concatenate([indiff_n_data, pref_n_data])), return_clusters=True, return_utilities=True)
 
             np.save(os.path.join(save_dir, "X_indiff.npy"), X_indiff)
             np.save(os.path.join(save_dir, "Y_indiff.npy"), Y_indiff)
             with open(os.path.join(save_dir, "info_indiff.pickle"), "wb") as file:
                 pickle.dump(info_indiff, file)
 
-            X_pref, Y_pref, info_pref= data_generator.generate_preferences_alldms(num_pairs=np.max(n_data), return_clusters=True, return_utilities=True)
+            X_pref, Y_pref, info_pref= data_generator.generate_preferences_alldms(num_pairs=2*np.max(np.concatenate([indiff_n_data, pref_n_data])), return_clusters=True, return_utilities=True)
             np.save(os.path.join(save_dir, "X_pref.npy"), X_pref)
             np.save(os.path.join(save_dir, "Y_pref.npy"), Y_pref)
             with open(os.path.join(save_dir, "info_pref.pickle"), "wb") as file:
                 pickle.dump(info_pref, file)
 
             logging.warning(f"Data drawn & saved in folder {save_dir}")
-        for data_length in n_data:
+        for data_length in indiff_n_data:
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
             logging.warning(f">>> Starting data length {data_length} of loop {run_i}.")
@@ -103,6 +150,7 @@ if __name__ == "__main__":
                     dist1.fit_generic(X_indiff[:data_length],
                                     Y_indiff[:data_length],
                                     time_limit=time_limit,
+                                    n_threads=n_threads,
                                     inflexions=inflexions,
                                     relation_type="indifference",
                                     clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
@@ -124,6 +172,7 @@ if __name__ == "__main__":
                     dist2.fit_generic(X_indiff[:data_length],
                                     Y_indiff[:data_length],
                                     time_limit=time_limit,
+                                    n_threads=n_threads,
                                     inflexions=inflexions,
                                     relation_type="indifference"
                                     )
@@ -135,6 +184,7 @@ if __name__ == "__main__":
                     logging.warning(f"Model 2 trained & saved in {model_save_dir}/indiff_singled")
 
 
+        for data_length in pref_n_data:
                 try:
                     with open(os.path.join(model_save_dir, "pref_coupled", "fit_params.json"), "r") as file:
                         is_fitted = json.load(file)["optimization_objective"]
@@ -145,6 +195,7 @@ if __name__ == "__main__":
                     dist3.fit_generic(X_pref[:data_length],
                                     Y_pref[:data_length],
                                     time_limit=time_limit,
+                                    n_threads=n_threads,
                                     inflexions=inflexions,
                                     relation_type="preference", warm_zs=True,
                                     clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
@@ -165,6 +216,7 @@ if __name__ == "__main__":
                     dist4.fit_generic(X_pref[:data_length],
                                     Y_pref[:data_length],
                                     time_limit=time_limit,
+                                    n_threads=n_threads,
                                     inflexions=inflexions,
                                     relation_type="preference", warm_zs=True
                                     )
