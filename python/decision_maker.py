@@ -72,8 +72,10 @@ class DecisionMaker:
                     crit_slopes.append(np.random.uniform(0, 10))
             slopes.append(crit_slopes)
         return np.stack(slopes)"""
+        
     def build_random_decision_function(self):
         coefficients = []
+
         for i in range(self.n_criteria):
             marginal_coefficients = create_piecewise_linear_coefficients(n_pieces=self.n_pieces,
             min_criterion=0., max_criterion=1., n_decimals=self.n_decimals)
