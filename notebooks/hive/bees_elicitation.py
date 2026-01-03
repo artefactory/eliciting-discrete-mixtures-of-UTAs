@@ -28,7 +28,7 @@ if __name__ == "__main__":
     n_runs = 10
     indiff_n_data = [32, 64, 128, 512, 2048]
     pref_n_data = [32, 128, 512, 2048, 4096]
-    time_limit = 10_800
+    base_time_limit = 10_800
     inflexions = np.vstack([np.linspace(0, 1., 6)] * 4)
     n_dms = 2
     method_params = {"n_pieces": 5}
@@ -130,6 +130,7 @@ if __name__ == "__main__":
 
             logging.warning(f"Data drawn & saved in folder {save_dir}")
         for data_length in indiff_n_data:
+            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
             logging.warning(f">>> Starting data length {data_length} of loop {run_i}.")
@@ -174,7 +175,8 @@ if __name__ == "__main__":
                                     time_limit=time_limit,
                                     n_threads=n_threads,
                                     inflexions=inflexions,
-                                    relation_type="indifference"
+                                    relation_type="indifference",
+                                    warm_zs=True,
                                     )
                     try:
                         dist2.save(savedir=f"{model_save_dir}/indiff_singled")
