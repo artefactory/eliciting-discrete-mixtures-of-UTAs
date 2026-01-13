@@ -36,7 +36,7 @@ if __name__ == "__main__":
     data_generation_gap = 0.001
     precision_decimals = 3
     indifferences_higher_bound = 2e-5
-    preferences_lower_bound = 1e-3
+    preferences_lower_bound = 2e-3
     lipschitz_coefficient = 1e-5
 
     n_threads = 16
@@ -187,47 +187,50 @@ if __name__ == "__main__":
 
 
         for data_length in pref_n_data:
-                try:
-                    with open(os.path.join(model_save_dir, "pref_coupled", "fit_params.json"), "r") as file:
-                        is_fitted = json.load(file)["optimization_objective"]
-                except:
-                        
-                    dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
-                    # dist.solver.setParam("DualReductions", 0)
-                    dist3.fit_generic(X_pref[:data_length],
-                                    Y_pref[:data_length],
-                                    time_limit=time_limit,
-                                    n_threads=n_threads,
-                                    inflexions=inflexions,
-                                    relation_type="preference", warm_zs=True,
-                                    clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
-
-                    try:
-                        dist3.save(savedir=f"{model_save_dir}/pref_coupled")
-                    except:
-                        logging.error(dist3.solver.status)
-                        dist3.save(savedir=f"{model_save_dir}/pref_coupled")
-                    logging.warning(f"Model 3 trained & saved in {model_save_dir}/pref_coupled")
+            print("Start Preferences n_data:", data_length)
+            model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
+            os.makedirs(model_save_dir, exist_ok=True)
+            try:
+                with open(os.path.join(model_save_dir, "pref_coupled", "fit_params.json"), "r") as file:
+                    is_fitted = json.load(file)["optimization_objective"]
+            except:
+                    
+                dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
+                # dist.solver.setParam("DualReductions", 0)
+                dist3.fit_generic(X_pref[:data_length],
+                                Y_pref[:data_length],
+                                time_limit=time_limit,
+                                n_threads=n_threads,
+                                inflexions=inflexions,
+                                relation_type="preference", warm_zs=True,
+                                clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
 
                 try:
-                    with open(os.path.join(model_save_dir, "pref_singled", "fit_params.json"), "r") as file:
-                        is_fitted = json.load(file)["optimization_objective"]
+                    dist3.save(savedir=f"{model_save_dir}/pref_coupled")
                 except:
-                    dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
-                    # dist.solver.setParam("DualReductions", 0)
-                    dist4.fit_generic(X_pref[:data_length],
-                                    Y_pref[:data_length],
-                                    time_limit=time_limit,
-                                    n_threads=n_threads,
-                                    inflexions=inflexions,
-                                    relation_type="preference", warm_zs=True
-                                    )
-                    try:
-                        dist4.save(savedir=f"{model_save_dir}/pref_singled")
-                    except:
-                        logging.error(dist4.solver.Status)
-                        dist4.save(savedir=f"{model_save_dir}/pref_singled")
-                    logging.warning(f"Model 4 trained & saved in {model_save_dir}/pref_singled")
+                    logging.error(dist3.solver.status)
+                    dist3.save(savedir=f"{model_save_dir}/pref_coupled")
+                logging.warning(f"Model 3 trained & saved in {model_save_dir}/pref_coupled")
 
-                with open(os.path.join(model_save_dir, "end.json"), "w") as file:
-                    json.dump({"training_finished": True}, file)
+            try:
+                with open(os.path.join(model_save_dir, "pref_singled", "fit_params.json"), "r") as file:
+                    is_fitted = json.load(file)["optimization_objective"]
+            except:
+                dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
+                # dist.solver.setParam("DualReductions", 0)
+                dist4.fit_generic(X_pref[:data_length],
+                                Y_pref[:data_length],
+                                time_limit=time_limit,
+                                n_threads=n_threads,
+                                inflexions=inflexions,
+                                relation_type="preference", warm_zs=True
+                                )
+                try:
+                    dist4.save(savedir=f"{model_save_dir}/pref_singled")
+                except:
+                    logging.error(dist4.solver.Status)
+                    dist4.save(savedir=f"{model_save_dir}/pref_singled")
+                logging.warning(f"Model 4 trained & saved in {model_save_dir}/pref_singled")
+
+            with open(os.path.join(model_save_dir, "end.json"), "w") as file:
+                json.dump({"training_finished": True}, file)
