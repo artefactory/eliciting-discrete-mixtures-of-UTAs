@@ -26,14 +26,14 @@ if __name__ == "__main__":
     # main_save_dir = "/data/workspace/vincent/elicit"
     main_save_dir = get_xp_savedir()
     n_runs = 10
-    indiff_n_data = [32, 64, 74, 128, 512, 2048]
+    indiff_n_data = [32, 64, 74, 128, 256]
     pref_n_data = [32, 74, 128, 512, 2048, 4096]
     base_time_limit = 10_800
     inflexions = np.vstack([np.linspace(0, 1., 6)] * 4)
     n_dms = 2
     method_params = {"n_pieces": 5}
     n_criteria = 4
-    data_generation_gap = 0.001
+    data_generation_gap = 0.002
     precision_decimals = 3
     indifferences_higher_bound = 2e-5
     preferences_lower_bound = 2e-3
