@@ -15,4 +15,4 @@ module load python/3.9.10/gcc-11.2.0
 source /gpfs/users/auriauvi/.venv/guro/bin/activate
 cd /gpfs/users/auriauvi/eliciting-discrete-mixtures-of-UTAs/notebooks/hive
 
-python -u bees_elicitation.py --flag b
+python -u bees_elicitation.py --flag e
