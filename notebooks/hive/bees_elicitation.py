@@ -193,7 +193,7 @@ if __name__ == "__main__":
             try:
                 with open(os.path.join(model_save_dir, "pref_coupled", "fit_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
-            except:
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
                     
                 dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
                 # dist.solver.setParam("DualReductions", 0)
@@ -215,7 +215,7 @@ if __name__ == "__main__":
             try:
                 with open(os.path.join(model_save_dir, "pref_singled", "fit_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
-            except:
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
                 dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
                 # dist.solver.setParam("DualReductions", 0)
                 dist4.fit_generic(X_pref[:data_length],
