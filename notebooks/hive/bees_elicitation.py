@@ -27,6 +27,7 @@ if __name__ == "__main__":
     main_save_dir = get_xp_savedir()
     n_runs = 10
     indiff_n_data = [32, 64, 74, 128, 256]
+    indiff_n_data_singled = [32, 64, 74, 128, 256, 512, 2048]
     pref_n_data = [32, 74, 128, 512, 2048, 4096]
     base_time_limit = 10_800
     inflexions = np.vstack([np.linspace(0, 1., 6)] * 4)
@@ -129,61 +130,60 @@ if __name__ == "__main__":
                 pickle.dump(info_pref, file)
 
             logging.warning(f"Data drawn & saved in folder {save_dir}")
+
         for data_length in indiff_n_data:
             time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
             logging.warning(f">>> Starting data length {data_length} of loop {run_i}.")
 
+
             try:
-                with open(os.path.join(model_save_dir, "end.json"), "r") as file:
-                    results = json.load(file)
-                if not results["training_finished"]:
-                    raise ValueError
+                with open(os.path.join(model_save_dir, "indiff_coupled", "fit_params.json"), "r") as file:
+                    is_fitted = json.load(file)["optimization_objective"]
+            except:
+                dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
+                # dist.solver.setParam("DualReductions", 0)
+                dist1.fit_generic(X_indiff[:data_length],
+                                Y_indiff[:data_length],
+                                time_limit=time_limit,
+                                n_threads=n_threads,
+                                inflexions=inflexions,
+                                relation_type="indifference",
+                                clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
+                try:
+                    dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
+                except:
+                    logging.error(dist1.solver.Status)
+                    dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
+                logging.warning(f"Model 1 trained & saved in {model_save_dir}/indiff_coupled")
+
+        for data_length in indiff_n_data_singled:
+            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
+            model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
+            os.makedirs(model_save_dir, exist_ok=True)
+
+            try:
+                with open(os.path.join(model_save_dir, "indiff_singled", "fit_params.json"), "r") as file:
+                    is_fitted = json.load(file)["optimization_objective"]
             except:
 
+                dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
+                # dist.solver.setParam("DualReductions", 0)
+                dist2.fit_generic(X_indiff[:data_length],
+                                Y_indiff[:data_length],
+                                time_limit=time_limit,
+                                n_threads=n_threads,
+                                inflexions=inflexions,
+                                relation_type="indifference",
+                                warm_zs=True,
+                                )
                 try:
-                    with open(os.path.join(model_save_dir, "indiff_coupled", "fit_params.json"), "r") as file:
-                        is_fitted = json.load(file)["optimization_objective"]
+                    dist2.save(savedir=f"{model_save_dir}/indiff_singled")
                 except:
-                    dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
-                    # dist.solver.setParam("DualReductions", 0)
-                    dist1.fit_generic(X_indiff[:data_length],
-                                    Y_indiff[:data_length],
-                                    time_limit=time_limit,
-                                    n_threads=n_threads,
-                                    inflexions=inflexions,
-                                    relation_type="indifference",
-                                    clustering=np.concatenate([[i, i] for i in range(data_length//2)]))
-                    try:
-                        dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
-                    except:
-                        logging.error(dist1.solver.Status)
-                        dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
-                    logging.warning(f"Model 1 trained & saved in {model_save_dir}/indiff_coupled")
-
-
-                try:
-                    with open(os.path.join(model_save_dir, "indiff_singled", "fit_params.json"), "r") as file:
-                        is_fitted = json.load(file)["optimization_objective"]
-                except:
-
-                    dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
-                    # dist.solver.setParam("DualReductions", 0)
-                    dist2.fit_generic(X_indiff[:data_length],
-                                    Y_indiff[:data_length],
-                                    time_limit=time_limit,
-                                    n_threads=n_threads,
-                                    inflexions=inflexions,
-                                    relation_type="indifference",
-                                    warm_zs=True,
-                                    )
-                    try:
-                        dist2.save(savedir=f"{model_save_dir}/indiff_singled")
-                    except:
-                        logging.error(dist2.solver.Status)
-                        dist2.save(savedir=f"{model_save_dir}/indiff_singled")
-                    logging.warning(f"Model 2 trained & saved in {model_save_dir}/indiff_singled")
+                    logging.error(dist2.solver.Status)
+                    dist2.save(savedir=f"{model_save_dir}/indiff_singled")
+                logging.warning(f"Model 2 trained & saved in {model_save_dir}/indiff_singled")
 
 
         for data_length in pref_n_data:
@@ -232,6 +232,3 @@ if __name__ == "__main__":
                     logging.error(dist4.solver.Status)
                     dist4.save(savedir=f"{model_save_dir}/pref_singled")
                 logging.warning(f"Model 4 trained & saved in {model_save_dir}/pref_singled")
-
-            with open(os.path.join(model_save_dir, "end.json"), "w") as file:
-                json.dump({"training_finished": True}, file)
