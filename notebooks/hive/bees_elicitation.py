@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
         for data_length in pref_n_data:
             print("Start Preferences n_data:", data_length)
-            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
+            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 512).astype(int) + base_time_limit * np.array(data_length >= 4096).astype(int)
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
             try:
