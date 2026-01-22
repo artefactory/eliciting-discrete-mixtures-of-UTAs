@@ -132,6 +132,7 @@ if __name__ == "__main__":
             logging.warning(f"Data drawn & saved in folder {save_dir}")
 
         for data_length in indiff_n_data:
+            print("Start Indifferences n_data:", data_length)
             time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
@@ -159,7 +160,8 @@ if __name__ == "__main__":
                 logging.warning(f"Model 1 trained & saved in {model_save_dir}/indiff_coupled")
 
         for data_length in indiff_n_data_singled:
-            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
+            print("Start Indifferences n_data:", data_length)
+            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 512).astype(int)
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
 
