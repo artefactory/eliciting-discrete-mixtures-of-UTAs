@@ -184,7 +184,13 @@ if __name__ == "__main__":
                     dist2.save(savedir=f"{model_save_dir}/indiff_singled")
                 except:
                     logging.error(dist2.solver.Status)
-                    dist2.save(savedir=f"{model_save_dir}/indiff_singled")
+
+                    if data_length >= 512:
+                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "fit_params.json"), "w") as file:
+                                json.dump({"optimization_status": dist2.solver.Status, "optimization_objective": 1e-3}, file)
+                    else:
+                        dist2.save(savedir=f"{model_save_dir}/indiff_singled")
+
                 logging.warning(f"Model 2 trained & saved in {model_save_dir}/indiff_singled")
 
 
