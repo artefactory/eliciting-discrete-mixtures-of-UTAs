@@ -169,7 +169,6 @@ if __name__ == "__main__":
                 with open(os.path.join(model_save_dir, "indiff_singled", "fit_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
             except:
-
                 dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
                 # dist.solver.setParam("DualReductions", 0)
                 dist2.fit_generic(X_indiff[:data_length],
@@ -196,7 +195,7 @@ if __name__ == "__main__":
 
         for data_length in pref_n_data:
             print("Start Preferences n_data:", data_length)
-            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
+            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 512).astype(int) + base_time_limit * np.array(data_length >= 4096).astype(int)
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
             try:
@@ -216,10 +215,14 @@ if __name__ == "__main__":
 
                 try:
                     dist3.save(savedir=f"{model_save_dir}/pref_coupled")
+                    logging.warning(f"Model 3 trained & saved in {model_save_dir}/pref_coupled")
                 except:
                     logging.error(dist3.solver.status)
-                    dist3.save(savedir=f"{model_save_dir}/pref_coupled")
-                logging.warning(f"Model 3 trained & saved in {model_save_dir}/pref_coupled")
+                    if data_length >= 4096:
+                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "fit_params.json"), "w") as file:
+                                json.dump({"optimization_status": dist3.solver.Status, "optimization_objective": 1e-5}, file)
+                    else:
+                        dist3.save(savedir=f"{model_save_dir}/pref_coupled")
 
             try:
                 with open(os.path.join(model_save_dir, "pref_singled", "fit_params.json"), "r") as file:
@@ -238,5 +241,10 @@ if __name__ == "__main__":
                     dist4.save(savedir=f"{model_save_dir}/pref_singled")
                 except:
                     logging.error(dist4.solver.Status)
-                    dist4.save(savedir=f"{model_save_dir}/pref_singled")
+
+                    if data_length >= 4096:
+                        with open(os.path.join(f"{model_save_dir}/pref_singled", "fit_params.json"), "w") as file:
+                                json.dump({"optimization_status": dist4.solver.Status, "optimization_objective": 1e-5}, file)
+                    else:
+                        dist4.save(savedir=f"{model_save_dir}/pref_singled")
                 logging.warning(f"Model 4 trained & saved in {model_save_dir}/pref_singled")
