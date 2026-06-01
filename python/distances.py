@@ -2570,5 +2570,5 @@ class TwoUTASpaceDiameter(object):
             all_weights = [[self.marginal_coeffs[uta_model, i, k].x for k in range(self.n_pieces + 1)] for i in range(self.inflexions.shape[0])]
             np.save(os.path.join(savedir, f"{uta_model}_weights.npy"), all_weights)
 
-        with open(os.path.join(savedir, "fit_params.json"), "w") as file:
+        with open(os.path.join(savedir, "optim_params.json"), "w") as file:
             json.dump(self.optim_params, file)
