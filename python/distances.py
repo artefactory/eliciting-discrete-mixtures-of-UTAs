@@ -973,6 +973,8 @@ class TwoUTASpaceDiameter(object):
         self.lipschitz_coeff = lipschitz_coeff
         self.solver = self.instantiate()
 
+        self.optim_params = {}
+
     def _determine_inflexions(self, X, Y):
         """Determine inflexions of the utility functions for each feature.
 
@@ -1251,6 +1253,12 @@ class TwoUTASpaceDiameter(object):
         # -- Résolution --
         self.solver.optimize()
         self.status = self.solver.Status
+        self.optim_params["status"] = self.status
+        self.optim_params["obj_val"] = self.solver.ObjVal
+        self.optim_params["runtime"] = self.solver.Runtime
+        self.optim_params["num_constr"] = self.solver.NumConstrs
+        self.optim_params["num_vars"] = self.solver.NumVars
+        self.optim_params["optimality_gap"] = self.solver.MIPGap
 
         """if self.status == 2:
             self.lower_bound_coeffs = [
@@ -1538,6 +1546,12 @@ class TwoUTASpaceDiameter(object):
         # -- Résolution --
         self.solver.optimize()
         self.status = self.solver.Status
+        self.optim_params["status"] = self.status
+        self.optim_params["obj_val"] = self.solver.ObjVal
+        self.optim_params["runtime"] = self.solver.Runtime
+        self.optim_params["num_constr"] = self.solver.NumConstrs
+        self.optim_params["num_vars"] = self.solver.NumVars
+        self.optim_params["optimality_gap"] = self.solver.MIPGap
 
         """if self.status == 2:
             self.lower_bound_coeffs = [
@@ -1826,6 +1840,12 @@ class TwoUTASpaceDiameter(object):
         # -- Résolution --
         self.solver.optimize()
         self.status = self.solver.Status
+        self.optim_params["status"] = self.status
+        self.optim_params["obj_val"] = self.solver.ObjVal
+        self.optim_params["runtime"] = self.solver.Runtime
+        self.optim_params["num_constr"] = self.solver.NumConstrs
+        self.optim_params["num_vars"] = self.solver.NumVars
+        self.optim_params["optimality_gap"] = self.solver.MIPGap
 
     def fit_from_coupled_indifferences(
         self,
@@ -2145,6 +2165,12 @@ class TwoUTASpaceDiameter(object):
         # -- Résolution --
         self.solver.optimize()
         self.status = self.solver.Status
+        self.optim_params["status"] = self.status
+        self.optim_params["obj_val"] = self.solver.ObjVal
+        self.optim_params["runtime"] = self.solver.Runtime
+        self.optim_params["num_constr"] = self.solver.NumConstrs
+        self.optim_params["num_vars"] = self.solver.NumVars
+        self.optim_params["optimality_gap"] = self.solver.MIPGap
 
     def fit_generic(
         self,
@@ -2529,6 +2555,12 @@ class TwoUTASpaceDiameter(object):
         # -- Résolution --
         self.solver.optimize()
         self.status = self.solver.Status
+        self.optim_params["status"] = self.status
+        self.optim_params["obj_val"] = self.solver.ObjVal
+        self.optim_params["runtime"] = self.solver.Runtime
+        self.optim_params["num_constr"] = self.solver.NumConstrs
+        self.optim_params["num_vars"] = self.solver.NumVars
+        self.optim_params["optimality_gap"] = self.solver.MIPGap
 
     def save(self, savedir):
         os.makedirs(savedir, exist_ok=True)
@@ -2539,4 +2571,4 @@ class TwoUTASpaceDiameter(object):
             np.save(os.path.join(savedir, f"{uta_model}_weights.npy"), all_weights)
 
         with open(os.path.join(savedir, "fit_params.json"), "w") as file:
-            json.dump({"optimization_status": self.solver.Status, "optimization_objective": self.solver.ObjVal}, file)
+            json.dump(self.optim_params, file)
