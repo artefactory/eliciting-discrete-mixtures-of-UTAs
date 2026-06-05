@@ -973,8 +973,6 @@ class TwoUTASpaceDiameter(object):
         self.lipschitz_coeff = lipschitz_coeff
         self.focus_on_solution = focus_on_solution
         self.solver = self.instantiate()
-        if self.focus_on_solution:
-            print(self.solver.MIPFocus)
 
         self.optim_params = {}
 
@@ -2560,6 +2558,14 @@ class TwoUTASpaceDiameter(object):
         self.solver.setObjective(
             distance, gp.GRB.MAXIMIZE
         )
+
+        if self.focus_on_solution:
+            try:
+                self.solver.setParam("MIPFocus", 1)
+            except:
+                print(self.solver.Params)
+                self.solver.setParam("MIPFocus", 1)
+                
         self.solver.update()
 
         # -- Résolution --
