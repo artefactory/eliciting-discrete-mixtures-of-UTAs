@@ -1051,8 +1051,6 @@ class TwoUTASpaceDiameter(object):
     def instantiate(self):
         """Instantiate the solver"""
         solver = gp.Model("UTA")
-        if self.focus_on_solution:
-            solver.setParam("MIPFocus", 1)
         return solver
 
     def fit(
@@ -1253,6 +1251,13 @@ class TwoUTASpaceDiameter(object):
         self.solver.setObjective(
             distance, gp.GRB.MAXIMIZE
         )
+
+        if self.focus_on_solution:
+            try:
+                self.solver.setParam("MIPFocus", 1)
+            except:
+                print(self.solver.Params)
+                self.solver.setParam("MIPFocus", 1)
         self.solver.update()
 
         # -- Résolution --
