@@ -959,7 +959,7 @@ class UTASpaceDiameter(object):
 class TwoUTASpaceDiameter(object):
     """Gurobi based implementation of UTA."""
 
-    def __init__(self, n_pieces, epsilon=1e-4, lipschitz_coeff=0.):
+    def __init__(self, n_pieces, epsilon=1e-4, lipschitz_coeff=0., focus_on_solution=False):
         """Initialize Model.
 
         Parameters:
@@ -971,7 +971,10 @@ class TwoUTASpaceDiameter(object):
         self.n_pieces = n_pieces
         self.epsilon = epsilon
         self.lipschitz_coeff = lipschitz_coeff
+        self.focus_on_solution = focus_on_solution
         self.solver = self.instantiate()
+        if self.focus_on_solution:
+            print(self.solver.MIPFocus)
 
         self.optim_params = {}
 
@@ -1048,6 +1051,8 @@ class TwoUTASpaceDiameter(object):
     def instantiate(self):
         """Instantiate the solver"""
         solver = gp.Model("UTA")
+        if self.focus_on_solution:
+            solver.setParam("MIPFocus", 1)
         return solver
 
     def fit(
@@ -2556,11 +2561,15 @@ class TwoUTASpaceDiameter(object):
         self.solver.optimize()
         self.status = self.solver.Status
         self.optim_params["status"] = self.status
-        self.optim_params["obj_val"] = self.solver.ObjVal
+        try:
+            self.optim_params["obj_val"] = self.solver.ObjVal
+            self.optim_params["optimality_gap"] = self.solver.MIPGap
+        except:
+            self.optim_params["obj_val"] = None
+            self.optim_params["optimality_gap"] = None
         self.optim_params["runtime"] = self.solver.Runtime
         self.optim_params["num_constr"] = self.solver.NumConstrs
         self.optim_params["num_vars"] = self.solver.NumVars
-        self.optim_params["optimality_gap"] = self.solver.MIPGap
 
     def save(self, savedir):
         os.makedirs(savedir, exist_ok=True)

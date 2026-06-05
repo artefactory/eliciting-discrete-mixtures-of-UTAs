@@ -144,7 +144,7 @@ if __name__ == "__main__":
                 with open(os.path.join(model_save_dir, "indiff_coupled", "fit_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
             except:
-                dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
+                dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
                 t0 = time.time()
                 dist1.fit_generic(X_indiff[:data_length],
@@ -179,7 +179,7 @@ if __name__ == "__main__":
                 with open(os.path.join(model_save_dir, "indiff_singled", "fit_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
             except:
-                dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient)
+                dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
                 t0 = time.time()
                 dist2.fit_generic(X_indiff[:data_length],
@@ -229,7 +229,7 @@ if __name__ == "__main__":
                     is_fitted = json.load(file)["optimization_objective"]
             except (FileNotFoundError, json.JSONDecodeError, KeyError):
                     
-                dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
+                dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
                 t0 = time.time()
                 dist3.fit_generic(X_pref[:data_length],
@@ -270,7 +270,7 @@ if __name__ == "__main__":
                 with open(os.path.join(model_save_dir, "pref_singled", "fit_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
             except (FileNotFoundError, json.JSONDecodeError, KeyError):
-                dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient)
+                dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
                 t0 = time.time()
                 dist4.fit_generic(X_pref[:data_length],
