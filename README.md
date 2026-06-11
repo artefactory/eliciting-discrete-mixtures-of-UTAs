@@ -8,5 +8,6 @@ Vincent Auriau<sup>1, 2</sup>, Khaled Belahcène<sup>1</sup>, Emmanuel Malherbe<
 
 </div>
 
-
 <img align="right" src="./resources/illustration.png">
+
+> *Eliciting a preference model involves asking a person, named decision-maker, a series of questions. We assume that these preferences can be represented by an additive value function. In this work, we query simultaneously  two decision-makers in the aim to elicit their respective value functions. For each query we receive two answers, without noise, but without knowing which answer corresponds to which decision-maker. We propose an elicitation procedure that identifies the two preference models when the marginal value functions are piecewise linear with known breakpoints. We also present experimental results that compare our active elicitation procedure with preference learning settings, showing the efficiency of our procedure.*

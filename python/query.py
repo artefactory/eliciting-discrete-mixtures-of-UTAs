@@ -19,12 +19,13 @@ class SquaredQuery:
         q_i = self.max_i
         p_i = self.min_i
         q_j = self.min_j
-
-        answer_1 = hdm.answer(criterion_i=self.criterion_i, criterion_j=self.criterion_j, q_i=q_i, q_j=q_j, p_i=p_i)
+        
+        print("/// ", self.criterion_i, self.criterion_j, q_i, q_j, p_i)
+        answer_1 = hdm.query(criterion_i=self.criterion_i, criterion_j=self.criterion_j, query_i=q_i, query_j=q_j, p_i=p_i)
         answer_1[answer_1 == None] = self.max_j+1
 
         if np.sum(answer_1 > self.max_j) == 2:
-            answer_1 = hdm.answer(criterion_i=self.criterion_j, criterion_j=self.criterion_i, q_i=self.max_j, q_j=self.min_i, p_i=self.min_j)
+            answer_1 = hdm.query(criterion_i=self.criterion_j, criterion_j=self.criterion_i, query_i=self.max_j, query_j=self.min_i, p_i=self.min_j)
             assert None not in answer_1, answer_1
             return [self.criterion_i, self.criterion_j], [[self.min_i, self.max_j], [answer_1[0], self.min_j],], [[self.min_i, self.max_j], [answer_1[1], self.min_j]]
 
@@ -34,7 +35,7 @@ class SquaredQuery:
                 q_i = self.min_j + 1e-6
             p_i = self.min_j
             q_j = self.min_i
-            answer_1 = hdm.answer(criterion_i=self.criterion_j, criterion_j=self.criterion_i, q_i=q_i, q_j=q_j, p_i=p_i)
+            answer_1 = hdm.query(criterion_i=self.criterion_j, criterion_j=self.criterion_i, query_i=q_i, query_j=q_j, p_i=p_i)
             assert None not in answer_1, answer_1
             return [self.criterion_i, self.criterion_j], [[self.min_i, q_i], [answer_1[0], self.min_j],], [[self.min_i, q_i], [answer_1[1], self.min_j]]
 
@@ -65,21 +66,36 @@ class BridgeQuery:
         p_i = self.min_squared
         q_j = (self.bridged_breakpoint - self.min_bridged) / 2 + self.min_bridged
 
-        answer_1 = hdm.answer(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, q_i=q_i, q_j=q_j, p_i=p_i)
+        answer_1 = hdm.query(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, query_i=q_i, query_j=q_j, p_i=p_i)
 
+        print("ANSWER", answer_1)
+        print("..", q_i, q_j, p_i)
+        print("..")
+        print("..")
+        print("..")
+
+        count = 0
         while True:
-            if np.sum(answer_1 > self.bridged_breakpoint + self.epsilon) == 2 and np.sum(answer_1 <= self.max_bridged) == 2:
+            print(count, "answer 2", answer_1)
+            if count > 20:
+                raise Exception("Too many iterations")
+            count += 1
+            if None in answer_1:
+                q_i = q_i - (q_i - self.min_squared) / 2
+                answer_1 = hdm.query(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, query_i=q_i, query_j=q_j, p_i=p_i)
+                
+            elif np.sum(answer_1 > self.bridged_breakpoint + self.epsilon) == 2 and np.sum(answer_1 <= self.max_bridged) == 2:
                 return ([q_i, q_j], [p_i, answer_1[0]]), ([q_i, q_j], [p_i, answer_1[1]])
 
             elif np.sum(answer_1 > self.bridged_breakpoint + self.epsilon) < 2:
                 q_j = q_j + (self.bridged_breakpoint - np.min(answer_1)) + (np.min(answer_1) - q_j) / 2
-                answer_1 = hdm.answer(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, q_i=q_i, q_j=q_j, p_i=p_i)
+                answer_1 = hdm.query(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, query_i=q_i, query_j=q_j, p_i=p_i)
 
             else:
                 """if (np.max(answer_1) - np.min(answer_1) < self.max_bridged - self.bridged_breakpoint) and q_j + (self.max_bridged - np.max(answer_1)) + 1e-3 > self.min_bridged:
                     q_j = q_j + (self.max_bridged - np.max(answer_1)) - 1e-3
                     print(q_j, self.max_bridged, answer_1)
-                    answer_1 = hdm.answer(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, q_i=q_i, q_j=q_j, p_i=p_i)
+                    answer_1 = hdm.query(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, q_i=q_i, q_j=q_j, p_i=p_i)
                 else:"""
                 q_i = q_i - (q_i - self.min_squared) / 2
-                answer_1 = hdm.answer(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, q_i=q_i, q_j=q_j, p_i=p_i)
+                answer_1 = hdm.query(criterion_i=self.constrained_criterion, criterion_j=self.bridged_criterion, query_i=q_i, query_j=q_j, p_i=p_i)
