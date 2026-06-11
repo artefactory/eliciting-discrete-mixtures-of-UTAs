@@ -76,7 +76,6 @@ class BridgeQuery:
 
         count = 0
         while True:
-            print(count, "answer 2", answer_1)
             if count > 20:
                 raise Exception("Too many iterations")
             count += 1

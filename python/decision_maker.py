@@ -1,4 +1,5 @@
 """Implementation of Decision Maker with UTA decision function."""
+"""Implementation of Decision Maker with UTA decision function."""
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -133,7 +134,6 @@ class DecisionMaker:
                     if max_bp_value - marginal_utility_value_j > -marginal_utility_difference_i and min_bp_value - marginal_utility_value_j <= -marginal_utility_difference_i:
                         
                         dv = - marginal_utility_difference_i + marginal_utility_value_j - min_bp_value
-                        print("zzxxzz", self.breakpoints_x[break_point] + dv / (max_bp_value - min_bp_value) * (self.breakpoints_x[break_point+1] - self.breakpoints_x[break_point]))
                         return self.breakpoints_x[break_point] + dv / (max_bp_value - min_bp_value) * (self.breakpoints_x[break_point+1] - self.breakpoints_x[break_point])
         
     def get_total_n_answers(self):
