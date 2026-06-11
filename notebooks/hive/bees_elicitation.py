@@ -16,7 +16,6 @@ from python.distances import TwoUTASpaceDiameter
 
 from host_config import get_xp_savedir
 
-
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

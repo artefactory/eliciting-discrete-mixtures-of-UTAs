@@ -72,7 +72,6 @@ class DecisionMaker:
                     crit_slopes.append(np.random.uniform(0, 10))
             slopes.append(crit_slopes)
         return np.stack(slopes)"""
-
     def build_random_decision_function(self):
         coefficients = []
         for i in range(self.n_criteria):
@@ -83,11 +82,6 @@ class DecisionMaker:
         while len(np.where(marginal_weights == 0)[0]) > 0:
             marginal_weights = get_random_uniform_normalized_vector(num_values=self.n_criteria, norm_value=1, decimals=2)
         return np.round(np.array(coefficients), self.n_decimals) * np.expand_dims(marginal_weights, axis=1)
-
-    def load_from_parameters(self, coefficients, breakpoints_x=None):
-        self.coefficients = coefficients
-        # self.breakpoints_x = breakpoints_x
-
 
     def plot_decision_function(self, show=True):
         x = np.linspace(0, 1, self.n_pieces+1)
@@ -112,12 +106,11 @@ class DecisionMaker:
         return total_utility
 
     def get_indifference_on_two_criteria(self, criterion_i, criterion_j, query_i, p_i, query_j):
-        marginal_utility_difference_i = self.get_marginal_utility(criterion_i, p_i) - self.get_marginal_utility(criterion_i, query_i)
-        marginal_utility_value_j = self.get_marginal_utility(criterion_j, query_j)
+        marginal_utility_difference_i = self.get_marginal_utility(criterion_index=criterion_i, criterion_value=p_i) - self.get_marginal_utility(criterion_index=criterion_i, criterion_value=query_i)
+        marginal_utility_value_j = self.get_marginal_utility(criterion_index=criterion_j, criterion_value=query_j)
 
         self.total_n_answers += 1
-        # print(marginal_utility_difference_i, marginal_utility_value_j)
-
+        
         if marginal_utility_difference_i > 0:
             # Impossible to compensate the utility difference 
             if marginal_utility_difference_i > self.coefficients[criterion_j][-1] - marginal_utility_value_j:
@@ -141,7 +134,6 @@ class DecisionMaker:
                     if max_bp_value - marginal_utility_value_j > -marginal_utility_difference_i and min_bp_value - marginal_utility_value_j <= -marginal_utility_difference_i:
                         
                         dv = - marginal_utility_difference_i + marginal_utility_value_j - min_bp_value
-
                         return self.breakpoints_x[break_point] + dv / (max_bp_value - min_bp_value) * (self.breakpoints_x[break_point+1] - self.breakpoints_x[break_point])
         
     def get_total_n_answers(self):
@@ -153,9 +145,16 @@ class HiddenDecisionMakers:
         self.dms = [DecisionMaker(n_criteria, n_pieces) for i in range(n_dms)]
 
     def query(self, criterion_i, criterion_j, query_i, p_i, query_j):
-        answers = [dm.get_indifference_on_two_criteria(criterion_i=criterion_i,
-            criterion_j=criterion_j,
-            query_i=query_i, p_i=p_i, query_j=query_j) for dm in self.dms]
+        answers = [
+            dm.get_indifference_on_two_criteria(
+                criterion_i=criterion_i,
+                criterion_j=criterion_j,
+                query_i=query_i,
+                p_i=p_i,
+                query_j=query_j
+                )
+                for dm in self.dms
+                ]
 
         return np.random.permutation(answers)
 

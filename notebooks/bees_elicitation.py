@@ -15,7 +15,6 @@ from python.distances import TwoUTASpaceDiameter
 if __name__ == "__main__":
 
     ### Parameters
-
     main_save_dir = "/data/workspace/vincent/elicit_01_06_26"
     n_runs = 5
     n_data = [32, 128, 512, 2048]

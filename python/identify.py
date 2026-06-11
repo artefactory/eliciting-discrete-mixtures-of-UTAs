@@ -20,23 +20,23 @@ class UTAsIdentification:
         self.slopes["beta"][0].append(1.)
 
     def identify_21(self, hdms):
-        query = SquaredQuery(criterion_i=0, criterion_j=1, min_i=0, max_i=1, min_j=0, max_j=1)
+        query = SquaredQuery(criterion_i=0, criterion_j=1, min_i=0, max_i=1/self.n_pieces, min_j=0, max_j=1/self.n_pieces)
         crits, I1, I2 = query.query_hidden_dms(hdms)
 
         self.slopes["alpha"][1].append((I1[0][0] - I1[1][0]) / (I1[1][1] - I1[0][1]))
         self.slopes["beta"][1].append((I2[0][0] - I2[1][0]) / (I2[1][1] - I2[0][1]))
 
     def identify_22(self, hdms):
-        query_1 = SquaredQuery(criterion_i=0, criterion_j=1, min_i=0, max_i=1, min_j=1, max_j=2)
+        query_1 = SquaredQuery(criterion_i=0, criterion_j=1, min_i=0, max_i=1/self.n_pieces, min_j=1/self.n_pieces, max_j=2/self.n_pieces)
         crits_1, I1_1, I2_1 = query_1.query_hidden_dms(hdms)
 
         query_2 = BridgeQuery(bridged_criterion=1, 
         constrained_criterion=0,
-        bridged_breakpoint=1, 
+        bridged_breakpoint=1 / self.n_pieces, 
         min_bridged=0, 
-        max_bridged=2, 
+        max_bridged=2 / self.n_pieces, 
         min_squared=0, 
-        max_squared=1)
+        max_squared=1 / self.n_pieces)
 
         I1_2, I2_2 = query_2.query_hidden_dms(hdms)
         
@@ -87,8 +87,8 @@ class UTAsIdentification:
 
         query = SquaredQuery(criterion_i=criterion,
         criterion_j=opposite_criterion,
-        min_i=square,
-        max_i=square+1,
+        min_i=square / self.n_pieces,
+        max_i=(square+1) / self.n_pieces,
         min_j=0,
         max_j=1)
         crits, I1, I2 = query.query_hidden_dms(hdms)
@@ -103,10 +103,10 @@ class UTAsIdentification:
         
         query = SquaredQuery(criterion_i=criterion,
         criterion_j=opposite_criterion,
-        min_i=square,
-        max_i=square+1,
-        min_j=1,
-        max_j=2)
+        min_i=square / self.n_pieces,
+        max_i=(square+1) / self.n_pieces,
+        min_j=1 / self.n_pieces,
+        max_j=2 / self.n_pieces)
         crits, I1, I2 = query.query_hidden_dms(hdms)
 
         possible_slopes = [((I1[1][1] - I1[0][1]) / (I1[0][0] - I1[1][0])) * self.slopes["alpha"][opposite_criterion][1], 
