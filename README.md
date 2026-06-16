@@ -19,3 +19,17 @@ An example with randomly drawn decision makers and their elicitation can be foun
 
 ## Implementation of the MILO to compute the diameter of the UTA-compatible Space
 
+The MILO implemented with Gurobi to compute $D^2(\Omega)$ can be used as follows:
+
+```python
+from python.distances import TwoUTASpaceDiameter
+
+d2_omega = TwoUTASpaceDiameter(n_pieces=5)
+d2_omega.fit_generic(
+    X=X,
+    Y=Y,
+    relation_type="preference",
+)
+```
+with $X, Y$ matrices from which each element $x_i$, $y_i$ are related, either $x_i$ is preferred to $y_i$ (in this case, use relation_type="preference") or $x_i$ and $y_i$ are indifferent (in this case use relation_type="indifference").
+
