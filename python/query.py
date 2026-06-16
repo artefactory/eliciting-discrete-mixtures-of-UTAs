@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class SquaredQuery:
+class SingleRectangleQuery:
     """Class representing a squared query between two criteria."""
 
     def __init__(self, criterion_i, criterion_j, min_i, max_i, min_j, max_j):
@@ -110,7 +110,7 @@ class SquaredQuery:
             )
 
 
-class NeightboringRectanglesQuery:
+class NeighboringRectanglesQuery:
     """Class representing a query between two neighboring rectangles."""
     def __init__(
         self,
