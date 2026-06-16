@@ -32,3 +32,4 @@ d2_omega.fit_generic(
 )
 ```
 with $X, Y$ matrices from which each element $x_i$, $y_i$ are related, either $x_i$ is preferred to $y_i$ (in this case, use relation_type="preference") or $x_i$ and $y_i$ are indifferent (in this case use relation_type="indifference").
+
