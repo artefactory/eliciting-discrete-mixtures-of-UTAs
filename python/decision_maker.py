@@ -1,5 +1,4 @@
 """Implementation of Decision Maker with UTA decision function."""
-"""Implementation of Decision Maker with UTA decision function."""
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,8 +50,20 @@ def create_piecewise_linear_coefficients(n_pieces, min_criterion=0.0, max_criter
 
 
 class DecisionMaker:
+    """Class representing a decision maker with a UTA decision function."""
 
     def __init__(self, n_criteria, n_pieces, n_decimals=5):
+        """Initialize the decision maker with random slopes for the UTA function.
+
+        Parameters
+        ----------
+        n_criteria : int
+            Number of criteria for the decision maker.
+        n_pieces : int
+            Number of pieces for each criterion.
+        n_decimals : int, optional
+            Number of decimals to round the slopes, by default 5.
+        """
         self.n_criteria = n_criteria
         self.n_pieces = n_pieces
         self.n_decimals = n_decimals
@@ -61,18 +72,14 @@ class DecisionMaker:
         self.breakpoints_x = np.linspace(0, 1., self.n_pieces+1)
         self.total_n_answers = 0
 
-    """def build_random_decision_function(self):
-        slopes = []
-        for i in range(self.n_criteria):
-            crit_slopes = []
-            for j in range(self.n_pieces):
-                if i == 0 and j == 0:
-                    crit_slopes.append(1.)
-                else:
-                    crit_slopes.append(np.random.uniform(0, 10))
-            slopes.append(crit_slopes)
-        return np.stack(slopes)"""
     def build_random_decision_function(self):
+        """Build a random decision function by generating random slopes for each criterion.
+
+        Returns
+        -------
+        np.ndarray
+            A 2D array of shape (n_criteria, n_pieces) containing the slopes for each criterion and piece.
+        """
         coefficients = []
         for i in range(self.n_criteria):
             marginal_coefficients = create_piecewise_linear_coefficients(n_pieces=self.n_pieces,
@@ -84,6 +91,15 @@ class DecisionMaker:
         return np.round(np.array(coefficients), self.n_decimals) * np.expand_dims(marginal_weights, axis=1)
 
     def plot_decision_function(self, show=True):
+        """Plot the decision function for each criterion.
+
+        Parameters
+        ----------
+        show : bool, optional
+            Whether to display the plot immediately, by default True.
+
+        The x-axis represents the value of the criterion, and the y-axis represents the utility.
+        """
         x = np.linspace(0, 1, self.n_pieces+1)
 
         plt.figure(figsize=(12, 4 * (self.n_criteria // 2 + self.n_criteria % 2)))
@@ -95,9 +111,6 @@ class DecisionMaker:
         plt.ylabel("Utility")
         if show:
             plt.show()
-
-    def get_marginal_utility(self, criterion_index, criterion_value):
-        return piecewise_linear_value(criterion_value, self.coefficients[criterion_index], min_x=self.breakpoints_x[0], max_x=self.breakpoints_x[-1])
 
     def get_total_utility(self, criteria_vector):
         total_utility = 0
@@ -135,16 +148,64 @@ class DecisionMaker:
                         
                         dv = - marginal_utility_difference_i + marginal_utility_value_j - min_bp_value
                         return self.breakpoints_x[break_point] + dv / (max_bp_value - min_bp_value) * (self.breakpoints_x[break_point+1] - self.breakpoints_x[break_point])
-        
+
+
     def get_total_n_answers(self):
+        """Return the total number of answers given by the decision maker.
+
+        Returns
+        -------
+        int
+            The total number of answers given by the decision maker.
+        """
         return self.total_n_answers
 
+    def get_marginal_utility(self, criterion_index, criterion_value):
+        return piecewise_linear_value(criterion_value, self.coefficients[criterion_index], min_x=self.breakpoints_x[0], max_x=self.breakpoints_x[-1])
+
+
+
 class HiddenDecisionMakers:
+    """Class representing a collection of hidden decision makers.
+
+    Mainly use to shuffle and hide the original decision makers when answering queries.
+    """
 
     def __init__(self, n_dms, n_criteria, n_pieces):
-        self.dms = [DecisionMaker(n_criteria, n_pieces) for i in range(n_dms)]
+        """Initialize Decision Makers.
+
+        Parameters
+        ----------
+        n_dms : int
+            Number of decision makers.
+        n_criteria : int
+            Number of criteria for each decision maker.
+        n_pieces : int
+            Number of pieces for each criterion.
+        """
+        self.dms = [DecisionMaker(n_criteria=n_criteria, n_pieces=n_pieces) for i in range(n_dms)]
 
     def query(self, criterion_i, criterion_j, query_i, p_i, query_j):
+        """Answer a query by shuffling the decision makers and returning their answers.
+
+        Parameters
+        ----------
+        criterion_i : int
+            The index of the first criterion.
+        criterion_j : int
+            The index of the second criterion.
+        q_i : float
+            The value for the first criterion.
+        p_i : float
+            The value for the first criterion.
+        q_j : float
+            The value for the second criterion.
+
+        Returns
+        -------
+        list of list of float
+            The answers of the hidden decision makers to the query.
+        """
         answers = [
             dm.get_indifference_on_two_criteria(
                 criterion_i=criterion_i,
@@ -159,4 +220,11 @@ class HiddenDecisionMakers:
         return np.random.permutation(answers)
 
     def get_total_n_answers(self):
+        """Return the total number of answers given by all decision makers.
+
+        Returns
+        -------
+        list of ints
+            The total number of answers given by each decision maker.
+        """
         return [dm.get_total_n_answers() for dm in self.dms]
