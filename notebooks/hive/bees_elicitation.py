@@ -62,49 +62,6 @@ if __name__ == "__main__":
             X_pref = np.load(os.path.join(save_dir, "X_pref.npy"))
             Y_pref = np.load(os.path.join(save_dir, "Y_pref.npy"))
 
-            # if len(X_indiff) < 2*np.max(np.concatenate([indiff_n_data, pref_n_data])) or len(X_pref) < 2*np.max(np.concatenate([indiff_n_data, pref_n_data])):
-            #     logging.warning(f"Data not found in folder {save_dir}, regenerating data. found {len(X_indiff)} indifferences and {len(X_pref)} preferences.")
-            #     data_generator = SyntheticDataGenerator(
-            #         n_dms=n_dms,
-            #         n_criteria=n_criteria,
-            #         method_params=method_params,
-            #         gap=data_generation_gap,
-            #         decimals=precision_decimals
-            #     )
-            #     with open(os.path.join(save_dir, "info_indiff.pickle"), "rb") as file:
-            #         info_indiff = pickle.load(file)
-            #     with open(os.path.join(save_dir, "info_pref.pickle"), "rb") as file:
-            #         info_pref = pickle.load(file)
-            #     data_generator.dms[0].load_from_parameters(info_indiff["coefficients_0"])
-            #     data_generator.dms[1].load_from_parameters(info_indiff["coefficients_1"])
-
-            #     X_indiff_2, Y_indiff_2, info_indiff_2 = data_generator.generate_indifferences_alldms(num_pairs=2*np.max(np.concatenate([indiff_n_data, pref_n_data])), return_clusters=True, return_utilities=True)
-            #     X_indiff = np.concatenate([X_indiff, X_indiff_2], axis=0)
-            #     Y_indiff = np.concatenate([Y_indiff, Y_indiff_2], axis=0)
-
-            #     assert (info_indiff_2["coefficients_0"] == info_indiff["coefficients_0"]).all()
-            #     for key in ['utilities_x', 'utilities_y', 'clusters']:
-            #         info_indiff[key] = np.concatenate([info_indiff[key], info_indiff_2[key]], axis=0)
-
-                
-            #     np.save(os.path.join(save_dir, "X_indiff.npy"), X_indiff)
-            #     np.save(os.path.join(save_dir, "Y_indiff.npy"), Y_indiff)
-            #     with open(os.path.join(save_dir, "info_indiff.pickle"), "wb") as file:
-            #         pickle.dump(info_indiff, file)
-
-            #     X_pref_2, Y_pref_2, info_pref_2 = data_generator.generate_preferences_alldms(num_pairs=2*np.max(np.concatenate([indiff_n_data, pref_n_data])), return_clusters=True, return_utilities=True)
-                
-            #     assert (info_pref_2["coefficients_0"] == info_pref["coefficients_0"]).all()
-            #     X_pref = np.concatenate([X_pref, X_pref_2], axis=0)
-            #     Y_pref = np.concatenate([Y_pref, Y_pref_2], axis=0)
-            #     for key in ['utilities_x', 'utilities_y', 'clusters']:
-            #         info_pref[key] = np.concatenate([info_pref[key], info_pref_2[key]], axis=0)
-                
-            #     np.save(os.path.join(save_dir, "X_pref.npy"), X_pref)
-            #     np.save(os.path.join(save_dir, "Y_pref.npy"), Y_pref)
-            #     with open(os.path.join(save_dir, "info_pref.pickle"), "wb") as file:
-            #         pickle.dump(info_pref, file)
-
         else:
             os.makedirs(save_dir)
             ### Setup Data Generator
@@ -134,16 +91,17 @@ if __name__ == "__main__":
 
         for data_length in indiff_n_data:
             print("Start Indifferences n_data:", data_length)
-            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
+            # time_limit = base_time_limit + base_time_limit * np.array(data_length >= 2048).astype(int)
+            time_limit = base_time_limit
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
             logging.warning(f">>> Starting data length {data_length} of loop {run_i}.")
 
 
             try:
-                with open(os.path.join(model_save_dir, "indiff_coupled", "fit_params.json"), "r") as file:
+                with open(os.path.join(model_save_dir, "indiff_coupled", "optim_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
-            except:
+            except FileNotFoundError:
                 dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
                 t0 = time.time()
@@ -158,10 +116,10 @@ if __name__ == "__main__":
                 try:
                     dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
 
-                    with open(os.path.join(f"{model_save_dir}/indiff_coupled", "fit_params.json"), "r") as file:
+                    with open(os.path.join(f"{model_save_dir}/indiff_coupled", "optim_params.json"), "r") as file:
                         opt_file = json.load(file)
                     opt_file["optimization_time"] = t1 - t0
-                    with open(os.path.join(f"{model_save_dir}/indiff_coupled", "fit_params.json"), "w") as file:
+                    with open(os.path.join(f"{model_save_dir}/indiff_coupled", "optim_params.json"), "w") as file:
                         json.dump(opt_file, file)
 
                 except:
@@ -171,14 +129,15 @@ if __name__ == "__main__":
 
         for data_length in indiff_n_data_singled:
             print("Start Indifferences n_data:", data_length)
-            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 512).astype(int)
+            # time_limit = base_time_limit + base_time_limit * np.array(data_length >= 512).astype(int)
+            time_limit = base_time_limit
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
 
             try:
-                with open(os.path.join(model_save_dir, "indiff_singled", "fit_params.json"), "r") as file:
+                with open(os.path.join(model_save_dir, "indiff_singled", "optim_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
-            except:
+            except FileNotFoundError:
                 dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
                 t0 = time.time()
@@ -194,26 +153,27 @@ if __name__ == "__main__":
                 try:
                     dist2.save(savedir=f"{model_save_dir}/indiff_singled")
 
-                    with open(os.path.join(f"{model_save_dir}/indiff_singled", "fit_params.json"), "r") as file:
+                    with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "r") as file:
                         opt_file = json.load(file)
                     opt_file["optimization_time"] = t1 - t0
-                    with open(os.path.join(f"{model_save_dir}/indiff_singled", "fit_params.json"), "w") as file:
+                    with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "w") as file:
                         json.dump(opt_file, file)
 
                 except:
                     logging.error(dist2.solver.Status)
 
-                    if data_length >= 512:
-                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "fit_params.json"), "w") as file:
+                    # if data_length >= 512:
+                    if data_length >= 1e6:
+                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "w") as file:
                                 json.dump({"optimization_status": dist2.solver.Status, "optimization_objective": 1e-3, "optimization_time": t1-t0}, file)
 
                     else:
                         dist2.save(savedir=f"{model_save_dir}/indiff_singled")
 
-                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "fit_params.json"), "r") as file:
+                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "r") as file:
                             opt_file = json.load(file)
                         opt_file["optimization_time"] = t1 - t0
-                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "fit_params.json"), "w") as file:
+                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "w") as file:
                             json.dump(opt_file, file)
 
                 logging.warning(f"Model 2 trained & saved in {model_save_dir}/indiff_singled")
@@ -221,13 +181,14 @@ if __name__ == "__main__":
 
         for data_length in pref_n_data:
             print("Start Preferences n_data:", data_length)
-            time_limit = base_time_limit + base_time_limit * np.array(data_length >= 512).astype(int) + base_time_limit * np.array(data_length >= 4096).astype(int)
+            # time_limit = base_time_limit + base_time_limit * np.array(data_length >= 512).astype(int) + base_time_limit * np.array(data_length >= 4096).astype(int)
+            time_limit = base_time_limit
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")
             os.makedirs(model_save_dir, exist_ok=True)
             try:
-                with open(os.path.join(model_save_dir, "pref_coupled", "fit_params.json"), "r") as file:
+                with open(os.path.join(model_save_dir, "pref_coupled", "optim_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
-            except (FileNotFoundError, json.JSONDecodeError, KeyError):
+            except FileNotFoundError:
                     
                 dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
@@ -244,34 +205,36 @@ if __name__ == "__main__":
                 try:
                     dist3.save(savedir=f"{model_save_dir}/pref_coupled")
 
-                    with open(os.path.join(f"{model_save_dir}/pref_coupled", "fit_params.json"), "r") as file:
+                    with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "r") as file:
                         opt_file = json.load(file)
                     opt_file["optimization_time"] = t1 - t0
-                    with open(os.path.join(f"{model_save_dir}/pref_coupled", "fit_params.json"), "w") as file:
+                    with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "w") as file:
                         json.dump(opt_file, file)
 
                     logging.warning(f"Model 3 trained & saved in {model_save_dir}/pref_coupled")
                 except:
                     logging.error(dist3.solver.status)
-                    if data_length >= 4096:
-                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "fit_params.json"), "w") as file:
+                    # if data_length >= 4096:
+                    if data_length >= 1e6:
+                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "w") as file:
                                 json.dump({"optimization_status": dist3.solver.Status, "optimization_objective": 1e-5, "optimization_time": t1 - t0}, file)
 
                     else:
                         dist3.save(savedir=f"{model_save_dir}/pref_coupled")
 
-                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "fit_params.json"), "r") as file:
+                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "r") as file:
                             opt_file = json.load(file)
                         opt_file["optimization_time"] = t1 - t0
-                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "fit_params.json"), "w") as file:
+                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "w") as file:
                             json.dump(opt_file, file)
 
             try:
-                with open(os.path.join(model_save_dir, "pref_singled", "fit_params.json"), "r") as file:
+                with open(os.path.join(model_save_dir, "pref_singled", "optim_params.json"), "r") as file:
                     is_fitted = json.load(file)["optimization_objective"]
-            except (FileNotFoundError, json.JSONDecodeError, KeyError):
+            except FileNotFoundError:
                 dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
+                time_limit = base_time_limit
                 t0 = time.time()
                 dist4.fit_generic(X_pref[:data_length],
                                 Y_pref[:data_length],
@@ -284,23 +247,24 @@ if __name__ == "__main__":
                 try:
                     dist4.save(savedir=f"{model_save_dir}/pref_singled")
 
-                    with open(os.path.join(f"{model_save_dir}/pref_singled", "fit_params.json"), "r") as file:
+                    with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "r") as file:
                         opt_file = json.load(file)
                     opt_file["optimization_time"] = t1 - t0
-                    with open(os.path.join(f"{model_save_dir}/pref_singled", "fit_params.json"), "w") as file:
+                    with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "w") as file:
                         json.dump(opt_file, file)
                 except:
                     logging.error(dist4.solver.Status)
 
-                    if data_length >= 4096:
-                        with open(os.path.join(f"{model_save_dir}/pref_singled", "fit_params.json"), "w") as file:
+                    # if data_length >= 4096:
+                    if data_length > 1e6:
+                        with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "w") as file:
                                 json.dump({"optimization_status": dist4.solver.Status, "optimization_objective": 1e-5, "optimization_time": t1 - t0}, file)
                     else:
                         dist4.save(savedir=f"{model_save_dir}/pref_singled")
                         
-                        with open(os.path.join(f"{model_save_dir}/pref_singled", "fit_params.json"), "r") as file:
+                        with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "r") as file:
                             opt_file = json.load(file)
                         opt_file["optimization_time"] = t1 - t0
-                        with open(os.path.join(f"{model_save_dir}/pref_singled", "fit_params.json"), "w") as file:
+                        with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "w") as file:
                             json.dump(opt_file, file)
                 logging.warning(f"Model 4 trained & saved in {model_save_dir}/pref_singled")
