@@ -30,7 +30,7 @@ if __name__ == "__main__":
     indiff_n_data = [32, 64, 74, 128, 256]
     indiff_n_data_singled = [32, 64, 74, 128, 256, 512, 2048]
     pref_n_data = [32, 74, 128, 512, 2048, 4096]
-    base_time_limit = 10_800
+    base_time_limit = 10_800 * 2
     inflexions = np.vstack([np.linspace(0, 1., 6)] * 4)
     n_dms = 2
     method_params = {"n_pieces": 5}
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     preferences_lower_bound = 2e-3
     lipschitz_coefficient = 1e-5
 
-    n_threads = 16
+    n_threads = 35
 
     parser = argparse.ArgumentParser(
                     prog='Elicit-World',
