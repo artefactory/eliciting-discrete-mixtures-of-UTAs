@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
             try:
                 with open(os.path.join(model_save_dir, "indiff_coupled", "optim_params.json"), "r") as file:
-                    is_fitted = json.load(file)["optimization_objective"]
+                    is_fitted = json.load(file)["obj_val"]
             except FileNotFoundError:
                 dist1 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
             try:
                 with open(os.path.join(model_save_dir, "indiff_singled", "optim_params.json"), "r") as file:
-                    is_fitted = json.load(file)["optimization_objective"]
+                    is_fitted = json.load(file)["obj_val"]
             except FileNotFoundError:
                 dist2 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=indifferences_higher_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
@@ -165,7 +165,7 @@ if __name__ == "__main__":
                     # if data_length >= 512:
                     if data_length >= 1e6:
                         with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "w") as file:
-                                json.dump({"optimization_status": dist2.solver.Status, "optimization_objective": 1e-3, "optimization_time": t1-t0}, file)
+                                json.dump({"optimization_status": dist2.solver.Status, "obj_val": 1e-3, "optimization_time": t1-t0}, file)
 
                     else:
                         dist2.save(savedir=f"{model_save_dir}/indiff_singled")
@@ -187,7 +187,7 @@ if __name__ == "__main__":
             os.makedirs(model_save_dir, exist_ok=True)
             try:
                 with open(os.path.join(model_save_dir, "pref_coupled", "optim_params.json"), "r") as file:
-                    is_fitted = json.load(file)["optimization_objective"]
+                    is_fitted = json.load(file)["obj_val"]
             except FileNotFoundError:
                     
                 dist3 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
@@ -217,7 +217,7 @@ if __name__ == "__main__":
                     # if data_length >= 4096:
                     if data_length >= 1e6:
                         with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "w") as file:
-                                json.dump({"optimization_status": dist3.solver.Status, "optimization_objective": 1e-5, "optimization_time": t1 - t0}, file)
+                                json.dump({"optimization_status": dist3.solver.Status, "obj_val": 1e-5, "optimization_time": t1 - t0}, file)
 
                     else:
                         dist3.save(savedir=f"{model_save_dir}/pref_coupled")
@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
             try:
                 with open(os.path.join(model_save_dir, "pref_singled", "optim_params.json"), "r") as file:
-                    is_fitted = json.load(file)["optimization_objective"]
+                    is_fitted = json.load(file)["obj_val"]
             except FileNotFoundError:
                 dist4 = TwoUTASpaceDiameter(n_pieces=method_params.get("n_pieces", 5), epsilon=preferences_lower_bound, lipschitz_coeff=lipschitz_coefficient, focus_on_solution=True)
                 # dist.solver.setParam("DualReductions", 0)
@@ -258,7 +258,7 @@ if __name__ == "__main__":
                     # if data_length >= 4096:
                     if data_length > 1e6:
                         with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "w") as file:
-                                json.dump({"optimization_status": dist4.solver.Status, "optimization_objective": 1e-5, "optimization_time": t1 - t0}, file)
+                                json.dump({"optimization_status": dist4.solver.Status, "obj_val": 1e-5, "optimization_time": t1 - t0}, file)
                     else:
                         dist4.save(savedir=f"{model_save_dir}/pref_singled")
                         
