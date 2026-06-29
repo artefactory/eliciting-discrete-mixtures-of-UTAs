@@ -2581,6 +2581,8 @@ class TwoUTASpaceDiameter(object):
         self.optim_params["runtime"] = self.solver.Runtime
         self.optim_params["num_constr"] = self.solver.NumConstrs
         self.optim_params["num_vars"] = self.solver.NumVars
+        self.optim_params["obj_bound"] = self.solver.ObjBound
+        self.optim_params["obj_boundC"] = self.solver.ObjBoundC
 
     def save(self, savedir):
         os.makedirs(savedir, exist_ok=True)
