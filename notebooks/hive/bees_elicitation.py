@@ -124,7 +124,9 @@ if __name__ == "__main__":
 
                 except:
                     logging.error(dist1.solver.Status)
-                    dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
+                    with open(f"{model_save_dir}/indiff_coupled/not_found.txt", "w") as file:
+                        file.write(f"{dist1.solver.ObjBound} - {dist1.solver.ObjBoundC}")
+                    # dist1.save(savedir=f"{model_save_dir}/indiff_coupled")
                 logging.warning(f"Model 1 trained & saved in {model_save_dir}/indiff_coupled")
 
         for data_length in indiff_n_data_singled:
@@ -161,20 +163,22 @@ if __name__ == "__main__":
 
                 except:
                     logging.error(dist2.solver.Status)
+                    with open(f"{model_save_dir}/indiff_singled/not_found.txt", "w") as file:
+                        file.write(f"{dist2.solver.ObjBound} - {dist2.solver.ObjBoundC}")
 
                     # if data_length >= 512:
-                    if data_length >= 1e6:
-                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "w") as file:
-                                json.dump({"optimization_status": dist2.solver.Status, "obj_val": 1e-3, "optimization_time": t1-t0}, file)
+                    # if data_length >= 1e6:
+                    #     with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "w") as file:
+                    #             json.dump({"optimization_status": dist2.solver.Status, "obj_val": 1e-3, "optimization_time": t1-t0}, file)
 
-                    else:
-                        dist2.save(savedir=f"{model_save_dir}/indiff_singled")
+                    # else:
+                    #     dist2.save(savedir=f"{model_save_dir}/indiff_singled")
 
-                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "r") as file:
-                            opt_file = json.load(file)
-                        opt_file["optimization_time"] = t1 - t0
-                        with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "w") as file:
-                            json.dump(opt_file, file)
+                    #     with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "r") as file:
+                    #         opt_file = json.load(file)
+                    #     opt_file["optimization_time"] = t1 - t0
+                    #     with open(os.path.join(f"{model_save_dir}/indiff_singled", "optim_params.json"), "w") as file:
+                    #         json.dump(opt_file, file)
 
                 logging.warning(f"Model 2 trained & saved in {model_save_dir}/indiff_singled")
 
@@ -214,19 +218,22 @@ if __name__ == "__main__":
                     logging.warning(f"Model 3 trained & saved in {model_save_dir}/pref_coupled")
                 except:
                     logging.error(dist3.solver.status)
+
+                    with open(f"{model_save_dir}/pref_coupled/not_found.txt", "w") as file:
+                        file.write(f"{dist3.solver.ObjBound} - {dist3.solver.ObjBoundC}")
                     # if data_length >= 4096:
-                    if data_length >= 1e6:
-                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "w") as file:
-                                json.dump({"optimization_status": dist3.solver.Status, "obj_val": 1e-5, "optimization_time": t1 - t0}, file)
+                    # if data_length >= 1e6:
+                    #     with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "w") as file:
+                    #             json.dump({"optimization_status": dist3.solver.Status, "obj_val": 1e-5, "optimization_time": t1 - t0}, file)
 
-                    else:
-                        dist3.save(savedir=f"{model_save_dir}/pref_coupled")
+                    # else:
+                    #     dist3.save(savedir=f"{model_save_dir}/pref_coupled")
 
-                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "r") as file:
-                            opt_file = json.load(file)
-                        opt_file["optimization_time"] = t1 - t0
-                        with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "w") as file:
-                            json.dump(opt_file, file)
+                    #     with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "r") as file:
+                    #         opt_file = json.load(file)
+                    #     opt_file["optimization_time"] = t1 - t0
+                    #     with open(os.path.join(f"{model_save_dir}/pref_coupled", "optim_params.json"), "w") as file:
+                    #         json.dump(opt_file, file)
 
             try:
                 with open(os.path.join(model_save_dir, "pref_singled", "optim_params.json"), "r") as file:
@@ -255,16 +262,19 @@ if __name__ == "__main__":
                 except:
                     logging.error(dist4.solver.Status)
 
+                    with open(f"{model_save_dir}/pref_singled/not_found.txt", "w") as file:
+                        file.write(f"{dist4.solver.ObjBound} - {dist4.solver.ObjBoundC}")
+
                     # if data_length >= 4096:
-                    if data_length > 1e6:
-                        with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "w") as file:
-                                json.dump({"optimization_status": dist4.solver.Status, "obj_val": 1e-5, "optimization_time": t1 - t0}, file)
-                    else:
-                        dist4.save(savedir=f"{model_save_dir}/pref_singled")
+                    # if data_length > 1e6:
+                    #     with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "w") as file:
+                    #             json.dump({"optimization_status": dist4.solver.Status, "obj_val": 1e-5, "optimization_time": t1 - t0}, file)
+                    # else:
+                    #     dist4.save(savedir=f"{model_save_dir}/pref_singled")
                         
-                        with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "r") as file:
-                            opt_file = json.load(file)
-                        opt_file["optimization_time"] = t1 - t0
-                        with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "w") as file:
-                            json.dump(opt_file, file)
+                    #     with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "r") as file:
+                    #         opt_file = json.load(file)
+                    #     opt_file["optimization_time"] = t1 - t0
+                    #     with open(os.path.join(f"{model_save_dir}/pref_singled", "optim_params.json"), "w") as file:
+                    #         json.dump(opt_file, file)
                 logging.warning(f"Model 4 trained & saved in {model_save_dir}/pref_singled")
