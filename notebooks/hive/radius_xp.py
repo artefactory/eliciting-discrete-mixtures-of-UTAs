@@ -429,7 +429,7 @@ if __name__ == "__main__":
 
             logging.warning(f"Data drawn & saved in folder {save_dir}")
 
-        # for data_length in indiff_n_data:
+        for data_length in indiff_n_data:
             print("Start Indifferences n_data:", data_length)
             time_limit = base_time_limit
             model_save_dir = os.path.join(save_dir, f"ndata_{data_length}")

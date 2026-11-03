@@ -4,7 +4,7 @@ available_hosts = ["ruche01.cluster", "research-Lambda-Vector"]
 
 XP_savedir = {
     "research-Lambda-Vector": "/data/workspace/vincent/elicit_radius",
-    "ruche01.cluster": "/gpfs/workdir/auriauvi/honey_focus",
+    "ruche01.cluster": "/gpfs/workdir/auriauvi/mr_1",
 }
 
 

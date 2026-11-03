@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=elicit_major_review_1_1
-#SBATCH --output=/gpfs/workdir/auriauvi/honey/logs/%x_%j.out
-#SBATCH --error=/gpfs/workdir/auriauvi/honey/logs/error_%x_%j.txt
+#SBATCH --job-name=run_1
+#SBATCH --output=/gpfs/workdir/auriauvi/mr_1/logs/%x_%j.out
+#SBATCH --error=/gpfs/workdir/auriauvi/mr_1/logs/error_%x_%j.txt
 #SBATCH --partition=cpu_long
 #SBATCH --ntasks=1
 
