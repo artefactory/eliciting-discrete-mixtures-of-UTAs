@@ -541,3 +541,215 @@ class ClusterUTA(object):
             estimate_y[k] = v.x
 
         return gap.x, Z, estimate_x, estimate_y
+
+    def fit_minimize_indiff_gap(
+        self,
+        X,
+        Y,
+        cluster_grouping=None,
+        unclustering=None,
+        time_limit=None,
+        mem_limit=120,
+        majoring_value=2,
+        verbose=0,
+        n_threads=32,
+    ):
+        """Estimation of the parameters."""
+        n_samples = X.shape[0]
+        n_features = Y.shape[1]
+        self.min, self.max, self.inflexions = self._determine_inflexions(X, Y)
+
+        assert unclustering is None or cluster_grouping is None
+        if cluster_grouping is None:
+            cluster_grouping = list(range(len(X)))
+
+        if verbose == 0:
+            self.solver.params.outputflag = 0  # mode muet
+
+        if time_limit is not None:
+            self.solver.setParam("TimeLimit", time_limit)
+        if mem_limit is not None:
+            self.solver.setParam("SoftMemLimit", mem_limit)
+        if n_threads is not None:
+            self.solver.setParam("Threads", n_threads)
+
+        if verbose > 0:
+            print("1/ Variables Definition")
+
+        marginal_coeffs = {
+            (q, i, j): self.solver.addVar(
+                vtype=gp.GRB.CONTINUOUS, name=f"s_{i}_{j}_{q}"
+            )
+            for j in range(self.n_pieces + 1)
+            for i in range(n_features)
+            for q in range(self.n_clusters)
+        }
+        self.marginal_coeffs = marginal_coeffs
+        estimate_x = {
+            (q, i, j): self.solver.addVar(
+                vtype=gp.GRB.CONTINUOUS, name=f"estimate_x_{q}_{i}_{j}"
+            )
+            for j in range(n_features)
+            for i in range(n_samples)
+            for q in range(self.n_clusters)
+        }
+        estimate_y = {
+            (q, i, j): self.solver.addVar(
+                vtype=gp.GRB.CONTINUOUS, name=f"estimate_y_{q}_{i}_{j}"
+            )
+            for j in range(n_features)
+            for i in range(n_samples)
+            for q in range(self.n_clusters)
+        }
+
+        gap = self.solver.addVar(vtype=gp.GRB.CONTINUOUS, lb=0, name=f"GAP")
+        
+        Z = {
+            (q, i): self.solver.addVar(vtype=gp.GRB.BINARY, lb=0, name=f"z_{i}_{q}")
+            for i in np.unique(cluster_grouping)
+            for q in range(self.n_clusters)
+        }
+
+        if verbose > 0:
+            print("2/ Constraints Definition")
+        # [MI - 2]
+        lower_bound = {
+            i: self.solver.addConstr(
+                marginal_coeffs[q, i, 0] == 0, name="lower_bound_normalization"
+            )
+            for i in range(n_features)
+            for q in range(self.n_clusters)
+        }
+        sum_to_one = {
+            self.solver.addConstr(
+                (
+                    gp.quicksum(
+                        marginal_coeffs[q, i, self.n_pieces] for i in range(n_features)
+                    )
+                )
+                == 1,
+                name="sum_to_one",
+            )
+            for q in range(self.n_clusters)
+        }
+        monotonicity = {
+            (q, i): {
+                k: self.solver.addConstr(
+                    marginal_coeffs[q, i, k + 1] >= marginal_coeffs[q, i, k],
+                    name="monotonicity",
+                )
+                for k in range(self.n_pieces)
+            }
+            for i in range(n_features)
+            for q in range(self.n_clusters)
+        }
+        one_cluster = {
+            i: self.solver.addConstr(
+                gp.quicksum([Z[(q, i)] for q in range(self.n_clusters)]) >= 1,
+                name="one and only one cluster per sample",
+            )
+            for i in np.unique(cluster_grouping)
+        }
+
+        # Unclustering constraints
+        different_clusters = {}
+        if unclustering is not None:
+            values = np.unique(unclustering)
+            for val in values:
+                val_to_uncluster = np.where(unclustering == val)[0]
+
+                for q in range(self.n_clusters):
+                    different_clusters[(val, q)] = self.solver.addConstr(
+                            gp.quicksum([Z[(q, i)] for i in val_to_uncluster]) <= 1,
+                            name="one sample per cluster",
+                        )
+        # [MI - 4]
+        # [MI - 1']
+        # [MI - 8']
+        if verbose > 0:
+            print("3/ Utility Constraints")
+        # Contraintes de préférences
+        for q in range(self.n_clusters):
+            for i in range(n_samples):
+                for j in range(n_features):
+                    for k in range(self.n_pieces):
+                        if (
+                            self.inflexions[j][k]
+                            <= X[i][j]
+                            <= self.inflexions[j][k + 1]
+                        ):
+                            self.solver.addConstr(
+                                estimate_x[q, i, j]
+                                == marginal_coeffs[q, j, k]
+                                + (
+                                    (X[i][j] - self.inflexions[j][k])
+                                    / (
+                                        self.inflexions[j][k + 1]
+                                        - self.inflexions[j][k]
+                                    )
+                                )
+                                * (
+                                    marginal_coeffs[q, j, k + 1]
+                                    - marginal_coeffs[q, j, k]
+                                ),
+                                name=f"estimate_x_{i}_{j}",
+                            )
+                        if (
+                            self.inflexions[j][k]
+                            <= Y[i][j]
+                            <= self.inflexions[j][k + 1]
+                        ):
+                            self.solver.addConstr(
+                                estimate_y[q, i, j]
+                                == marginal_coeffs[q, j, k]
+                                + (
+                                    (Y[i][j] - self.inflexions[j][k])
+                                    / (
+                                        self.inflexions[j][k + 1]
+                                        - self.inflexions[j][k]
+                                    )
+                                )
+                                * (
+                                    marginal_coeffs[q, j, k + 1]
+                                    - marginal_coeffs[q, j, k]
+                                ),
+                                name=f"estimate_y_{i}_{j}",
+                            )
+        self.indiff = {
+            (q, i): self.solver.addConstr(
+                gp.quicksum([estimate_x[(q, i, j)] for j in range(n_features)])
+                - gp.quicksum([estimate_y[(q, i, j)] for j in range(n_features)])
+                + majoring_value * (1 - Z[(q, cluster_grouping[i])])
+                <= gap
+            )
+            for i in range(n_samples)
+            for q in range(self.n_clusters)
+        }
+
+        self.solver.setObjective(
+            gap, gp.GRB.MINIMIZE
+        )
+        self.solver.update()
+
+        # Solving --
+
+        self.solver.optimize()
+        self.status = self.solver.Status
+
+        print("Optimization finished")
+        self.coeffs = [
+            [
+                [self.marginal_coeffs[(q, i, j)].x for j in range(self.n_pieces + 1)]
+                for i in range(n_features)
+            ]
+            for q in range(self.n_clusters)
+        ]
+        for k, v in Z.items():
+            Z[k] = v.x
+
+        for k, v in estimate_x.items():
+            estimate_x[k] = v.x
+        for k, v in estimate_y.items():
+            estimate_y[k] = v.x
+
+        return gap.x, Z, estimate_x, estimate_y
