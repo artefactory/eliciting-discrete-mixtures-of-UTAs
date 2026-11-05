@@ -15,4 +15,4 @@ module load python/3.9.10/gcc-11.2.0
 source /gpfs/users/auriauvi/.venv/guro/bin/activate
 cd /gpfs/users/auriauvi/eliciting-discrete-mixtures-of-UTAs/notebooks/hive
 
-python -u radius_xp.py --flag major_review_1_4
+python -u kuta_radius_xp.py --flag major_review_1_2
